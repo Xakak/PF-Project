@@ -27,9 +27,9 @@ void display_level(RenderWindow& window, char**lvl, Texture& bgTex,Sprite& bgSpr
 				blockSprite.setPosition(j * cell_size, i * cell_size);
 				window.draw(blockSprite);
 			}
-		}
 	}
 
+}
 }
 
 void platform_collision_y(char** lvl,float& offset_x,float& speed_x,float &postion_x,float& position_y,const int cell_size,int& height,int &width){
@@ -597,6 +597,13 @@ void initialize_level2(char** lvl,int width,int height){
 	for(int i=0;i<width;i++){
 		lvl[13][i] = '#';
 	}
+
+	for(int i=4;i<12;i++){
+		for(int j=4;j<11;j++)
+			if(i==j)
+				lvl[j][i]='#';
+	}
+
 }
 
 
@@ -925,6 +932,8 @@ else if(current_level==2){
 	if(!level2Loaded){
 		initialize_level2(lvl,width,height);
 		level2Loaded = true;
+
+
 	}
 
 
