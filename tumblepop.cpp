@@ -169,6 +169,7 @@ void suck(float speed,float& enemy_x,float &enemy_y,int enemy_w,int enemy_h, flo
 		if (checkcollision(player_x-15,player_y,pwidth,pheight,enemy_x,enemy_y,enemy_w,enemy_h,speed,e_speed))
 		isenemyalive = false;
 		enemy_x += 10;
+		
 	}
 
 	else if (Keyboard::isKeyPressed(Keyboard::D)){
@@ -188,6 +189,19 @@ void suck(float speed,float& enemy_x,float &enemy_y,int enemy_w,int enemy_h, flo
 		isenemyalive = false;
 		enemy_x += 10;
 	}
+	else if (Keyboard::isKeyPressed(Keyboard::W)){
+		if (checkcollision(player_x,player_y - 15,pwidth,pheight,enemy_x,enemy_y,enemy_w,enemy_h,speed,e_speed))
+		isenemyalive = false;
+		enemy_y += 10;
+	}
+
+	else if (Keyboard::isKeyPressed(Keyboard::S)){
+		if (checkcollision(player_x,player_y+15,pwidth,pheight,enemy_x,enemy_y,enemy_w,enemy_h,speed,e_speed))
+		isenemyalive = false;
+		enemy_y -= 10;
+	}
+
+
 	
 	
 }
@@ -398,11 +412,11 @@ void playerdies(Sprite &playersprite,int& frame,int& timer){
 
 }
 
-void getvacuum(Sprite& vacuumsprite,float& player_x,float& player_y,int& frame,int& timer,float &speed,float& vac_x,float& vac_y){
+void getvacuum(Sprite& vacuumsprite,Sprite& vacupsprite,float& player_x,float& player_y,int& frame,int& timer,float &speed,float& vac_x,float& vac_y){
 
-	
+if(Keyboard :: isKeyPressed(Keyboard::A) || Keyboard :: isKeyPressed(Keyboard::D) ||  Keyboard :: isKeyPressed(Keyboard::Space)){
 	timer++;
-	if (timer > 4){//height and width of three frames are different so we manually check all frames instead of general formula
+	if (timer > 0){//height and width of three frames are different so we manually check all frames instead of general formula
 		timer = 0; //reset the timer
 		if (frame > 2){
 		frame = 0;//reset it to 0 so that the animation keeps repeating
@@ -462,7 +476,8 @@ void getvacuum(Sprite& vacuumsprite,float& player_x,float& player_y,int& frame,i
 		//make the vacuum usable in 4 directions using WASD
 		if (Keyboard::isKeyPressed(Keyboard::D)){
 			if (speed < 0){
-			vacuumsprite.setScale(-3,-3);
+			vacuumsprite.setScale(-3,3);
+
 			vac_x = player_x+83+120;
 			vac_y = player_y + 51;
 			vacuumsprite.setPosition(vac_x,vac_y);
@@ -479,10 +494,28 @@ void getvacuum(Sprite& vacuumsprite,float& player_x,float& player_y,int& frame,i
 			vacuumsprite.setPosition(vac_x,vac_y);
 			}
 		}
+			if (Keyboard::isKeyPressed(Keyboard::W)){
+				vacupsprite.setScale(1,1);
+				vac_x = speed > 0 ?player_x-96:player_x;
+				vac_y = player_y - 96;//add player height
+				
+				vacupsprite.setPosition(vac_x,vac_y);
+				
+	}
+
+			if (Keyboard::isKeyPressed(Keyboard::S)){
+				vacupsprite.setScale(1,-1);
+				vac_x = speed > 0 ?player_x-96:player_x;//adjust the postition of the vaccum according to the visuals of the player
+				vac_y = player_y + 96 +120;
+				vacupsprite.setPosition(vac_x,vac_y);
+				
+	}
+		
 		
 		frame++;//goto next frame
-	}
-	
+		
+	}}
+
 	
 
 
@@ -635,6 +668,8 @@ int main()
 	Sprite vacuumsprite;
 	Texture skeletonTex;
 	Sprite skeletonSprite[4];
+	Texture vacuptex;
+	Sprite vacupsprite;
 
 
 
@@ -665,6 +700,8 @@ int main()
 	vacuumsprite.setTexture(vacuumtex);
 	vacuumsprite.setScale(3,3);
 	vacuumsprite.setTextureRect(IntRect(470,179,12,17));
+	vacuptex.loadFromFile("Assets/vacup.png");
+	vacupsprite.setTexture(vacuptex);
 	
 	//Music initialisation
 	Music lvlMusic;
@@ -870,12 +907,17 @@ int main()
 		frame = 0;
 		}
 		//vaccum
+		//vaccum
 		if (Keyboard::isKeyPressed(Keyboard::Space)){
-			getvacuum(vacuumsprite,player_x,player_y,vacframe,vactim,speed,vac_x,vac_y);
-
+			getvacuum(vacuumsprite,vacupsprite,player_x,player_y,vacframe,vactim,speed,vac_x,vac_y);
+			if(Keyboard::isKeyPressed(Keyboard::A) || Keyboard::isKeyPressed(Keyboard::D) || Keyboard::isKeyPressed(Keyboard::Space) && !(Keyboard::isKeyPressed(Keyboard::W) || Keyboard::isKeyPressed(Keyboard::S)) )
 			window.draw(vacuumsprite);
-			
-		}
+			if(Keyboard::isKeyPressed(Keyboard::W) || Keyboard::isKeyPressed(Keyboard::S))
+			window.draw(vacupsprite);
+	
+		
+
+	}
 	}
 
 		if (PlayerSprite.getScale().x < 0){
