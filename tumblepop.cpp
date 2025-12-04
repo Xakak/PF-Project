@@ -104,6 +104,7 @@ void player_gravity(char** lvl, float& offset_y, float& velocityY, bool& onGroun
 
 
 bool checkcollision(float x1, float y1, float w1, float h1, float x2,float y2, float w2, float h2,float speed1,float speed2){
+	//formula to check collision between two rectangles by checking 9 points of first rectangle if they lie within second rectangle
 	//adjust the hitbox
 	if (speed1 > 0){
 		x1 -= w1;
@@ -178,25 +179,25 @@ void suck(float speed,float& enemy_x,float &enemy_y,int enemy_w,int enemy_h, flo
 		enemy_x -= 10;
 	}
 
-	else if (speed > 0){
+	else if ((speed > 0) && !(Keyboard::isKeyPressed(Keyboard::W) || Keyboard::isKeyPressed(Keyboard::S))){
 		if (checkcollision(player_x+15,player_y,pwidth,pheight,enemy_x,enemy_y,enemy_w,enemy_h,speed,e_speed))
 		isenemyalive = false;
 		enemy_x -= 10;
 	}
 
-	else if (speed < 0){
+	else if (speed < 0 && !(Keyboard::isKeyPressed(Keyboard::W) || Keyboard::isKeyPressed(Keyboard::S))){
 		if (checkcollision(player_x-15,player_y,pwidth,pheight,enemy_x,enemy_y,enemy_w,enemy_h,speed,e_speed))
 		isenemyalive = false;
 		enemy_x += 10;
 	}
-	else if (Keyboard::isKeyPressed(Keyboard::W)){
-		if (checkcollision(player_x,player_y - 15,pwidth,pheight,enemy_x,enemy_y,enemy_w,enemy_h,speed,e_speed))
+	if (Keyboard::isKeyPressed(Keyboard::W)){
+		if (checkcollision(player_x,player_y -15,pwidth,pheight,enemy_x,enemy_y,enemy_w,enemy_h,speed,e_speed))
 		isenemyalive = false;
 		enemy_y += 10;
 	}
 
-	else if (Keyboard::isKeyPressed(Keyboard::S)){
-		if (checkcollision(player_x,player_y+15,pwidth,pheight,enemy_x,enemy_y,enemy_w,enemy_h,speed,e_speed))
+	if (Keyboard::isKeyPressed(Keyboard::S)){//+10 is because the vaccum is below the player so we adjust the hitbox accordingly
+		if (checkcollision(player_x,player_y  +15,pwidth,pheight,enemy_x,enemy_y,enemy_w,enemy_h,speed,e_speed))
 		isenemyalive = false;
 		enemy_y -= 10;
 	}
@@ -299,7 +300,7 @@ void ghosts(float ghost_x[],int ghost_speed[],int n,Sprite ghostsprite[],bool is
 	
 }
 }
-
+//function to handle skeleton movement and behavior
 void skeletons(float skeleton_x[],float skeleton_y[],int skeleton_speed[],int n,Sprite skeletonSprite[],bool isfacingleft[],int skeleton_state[],int skeleton_timer[],int cell_size){
 	//n are the no of skeletons.
 	//for level one
@@ -383,7 +384,7 @@ void skeletons(float skeleton_x[],float skeleton_y[],int skeleton_speed[],int n,
 	
 }
 }
-
+//function to check if ghost is on platform
 bool onplatform(char **lvl,float width, float height,float posx, float posy, const int cell_size,int speed){
 	float offset = posx + speed;
 	char bottomleft = lvl[((int)(posy + height)/cell_size)][(int)(offset)/cell_size];
@@ -399,7 +400,7 @@ bool onplatform(char **lvl,float width, float height,float posx, float posy, con
 }
 
 
-
+//function to handle player death animation
 void playerdies(Sprite &playersprite,int& frame,int& timer){
 	timer++;
 	if(timer>10){
@@ -411,8 +412,8 @@ void playerdies(Sprite &playersprite,int& frame,int& timer){
 	}
 
 }
-
-void getvacuum(Sprite& vacuumsprite,Sprite& vacupsprite,float& player_x,float& player_y,int& frame,int& timer,float &speed,float& vac_x,float& vac_y){
+//function to handle vacuum animation and position
+void getvacuum(Sprite& vacuumsprite,Sprite& vacupsprite,float& player_x,float& player_y,int& frame,int& timer,float &speed,float& vac_x,float& vac_y,int& vacwidth, int&vacheight){
 
 if(Keyboard :: isKeyPressed(Keyboard::A) || Keyboard :: isKeyPressed(Keyboard::D) ||  Keyboard :: isKeyPressed(Keyboard::Space)){
 	timer++;
@@ -481,7 +482,10 @@ if(Keyboard :: isKeyPressed(Keyboard::A) || Keyboard :: isKeyPressed(Keyboard::D
 			vac_x = player_x+83+120;
 			vac_y = player_y + 51;
 			vacuumsprite.setPosition(vac_x,vac_y);
-
+			 vacwidth = 93;
+			 vacheight = 72;
+			 vacupsprite.setPosition(-10000,10000);//move the up vacuum out of screen
+			 
 			}
 
 		}
@@ -492,25 +496,38 @@ if(Keyboard :: isKeyPressed(Keyboard::A) || Keyboard :: isKeyPressed(Keyboard::D
 			vac_x = player_x-83-120;
 			vac_y = player_y + 55;
 			vacuumsprite.setPosition(vac_x,vac_y);
+			vacwidth = 93;
+			vacheight = 72;
+			vacupsprite.setPosition(-10000,10000);//move the up vacuum out of screen
 			}
 		}
 			if (Keyboard::isKeyPressed(Keyboard::W)){
 				vacupsprite.setScale(1,1);
-				vac_x = speed > 0 ?player_x-96:player_x;
-				vac_y = player_y - 96;//add player height
-				
+				vac_x = speed > 0 ?player_x - vacwidth:player_x;//we subtrac
+				vac_y = player_y - vacheight;//adjust the postition of the vaccum according to the visuals of the player
+				vacwidth = 50;
+				vacheight = 97;
 				vacupsprite.setPosition(vac_x,vac_y);
+				vacuumsprite.setPosition(-10000,10000);//move the side vacuum out of screen
 				
 	}
 
 			if (Keyboard::isKeyPressed(Keyboard::S)){
 				vacupsprite.setScale(1,-1);
-				vac_x = speed > 0 ?player_x-96:player_x;//adjust the postition of the vaccum according to the visuals of the player
-				vac_y = player_y + 96 +120;
+				vac_x = speed > 0 ?player_x - vacwidth:player_x;//adjust the postition of the vaccum according to the visuals of the player
+				vac_y = player_y + vacheight +120;
 				vacupsprite.setPosition(vac_x,vac_y);
+				vacwidth = 50;
+				vacheight = 97;
+				vacuumsprite.setPosition(-10000,10000);//move the side vacuum out of screen
 				
 	}
-		
+			//if only the space is pressed and no direction keys are pressed then hide the up vacuum
+			if (Keyboard :: isKeyPressed(Keyboard::Space) && !(Keyboard::isKeyPressed(Keyboard::W) || Keyboard::isKeyPressed(Keyboard::A) || Keyboard::isKeyPressed(Keyboard::S) || Keyboard::isKeyPressed(Keyboard::D))){
+				vacupsprite.setPosition(-10000,10000);//move the up vacuum out of screen
+			}
+
+			
 		
 		frame++;//goto next frame
 		
@@ -909,12 +926,12 @@ int main()
 		//vaccum
 		//vaccum
 		if (Keyboard::isKeyPressed(Keyboard::Space)){
-			getvacuum(vacuumsprite,vacupsprite,player_x,player_y,vacframe,vactim,speed,vac_x,vac_y);
+			getvacuum(vacuumsprite,vacupsprite,player_x,player_y,vacframe,vactim,speed,vac_x,vac_y,vacwidth,vacheight);
 			if(Keyboard::isKeyPressed(Keyboard::A) || Keyboard::isKeyPressed(Keyboard::D) || Keyboard::isKeyPressed(Keyboard::Space) && !(Keyboard::isKeyPressed(Keyboard::W) || Keyboard::isKeyPressed(Keyboard::S)) )
 			window.draw(vacuumsprite);
 			if(Keyboard::isKeyPressed(Keyboard::W) || Keyboard::isKeyPressed(Keyboard::S))
 			window.draw(vacupsprite);
-	
+			cout<<vacwidth<<endl<<vacheight<<endl;
 		
 
 	}
@@ -988,7 +1005,7 @@ else if(current_level==2){
     for(int i=0; i<8; i++) if(isghostalive[i]) ghosts_left++;
     for(int i=0; i<4; i++) if(isskeletonalive[i]) skels_left++;
     
-    cout << "Ghosts: " << ghosts_left << " | Skeletons: " << skels_left << endl;
+    
 	window.display();
 
 
