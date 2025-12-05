@@ -13,7 +13,7 @@ using namespace std;
 int screen_x = 1136;
 int screen_y = 896;
 
-void display_level(RenderWindow& window, char**lvl, Texture& bgTex,Sprite& bgSprite,Texture& blockTexture,Sprite& blockSprite, const int height, const int width, const int cell_size)
+void display_level(RenderWindow& window, char**lvl, Texture& bgTex,Sprite& bgSprite,Texture& blockTexture,Sprite& blockSprite,Texture& blockLTexture,Sprite& blockLSprite,Texture& blockRTexture,Sprite& blockRSprite, const int height, const int width, const int cell_size)
 {
 	window.draw(bgSprite);
 
@@ -27,8 +27,17 @@ void display_level(RenderWindow& window, char**lvl, Texture& bgTex,Sprite& bgSpr
 				blockSprite.setPosition(j * cell_size, i * cell_size);
 				window.draw(blockSprite);
 			}
+			if(lvl[i][j] == 'L'){
+				blockLSprite.setPosition(j * cell_size, i * cell_size);
+				window.draw(blockLSprite);
+			}
+			if(lvl[i][j] == 'R'){
+				blockRSprite.setPosition(j * cell_size, i * cell_size);
+				window.draw(blockRSprite);	
+
 	}
 
+}
 }
 }
 
@@ -77,7 +86,9 @@ void player_gravity(char** lvl, float& offset_y, float& velocityY, bool& onGroun
         // Calculate the grid row where the feet are currently(taken from above)
         int feet_row = (int)(offset_y + Pheight) / cell_size;
         
-        if (bottom_left_down == '#' || bottom_right_down == '#' || bottom_mid_down == '#')//if below is platform
+        if (bottom_left_down == '#' || bottom_right_down == '#' || bottom_mid_down == '#' ||
+			bottom_left_down == 'L' || bottom_right_down == 'L' || bottom_mid_down == 'L' ||
+			bottom_left_down == 'R' || bottom_right_down == 'R' || bottom_mid_down == 'R')//if below is platform
         {
             float platform_top = feet_row * cell_size;//same as feet_row because feet is on platform
             float old_feet_y = player_y + Pheight;
@@ -391,7 +402,7 @@ bool onplatform(char **lvl,float width, float height,float posx, float posy, con
 	char bottommiddle = lvl[((int)(posy + height)/cell_size)][(int)(offset + width/2)/cell_size];
 	char bottomright = lvl[((int)(posy + height)/cell_size)][(int)(offset+width)/cell_size];
 
-	if (bottomleft == '#'){//only check for bottom left since we added the width in ghost func so it is the left bottom of sprite.
+	if (bottomleft == '#' || bottomleft == 'L' || bottomleft == 'R'){//only check for bottom left since we added the width in ghost func so it is the left bottom of sprite.
 		return true;
 	}
 
@@ -636,7 +647,7 @@ void updatebullets(char** lvl,int levelWidth,int levelHeight,int cell_size,int b
 			int bottomRow = (bullety[i] + bh) / cell_size;//foot row mean
 			int midCol = (bulletx[i] + bw/2) / cell_size;//midcol
 			if (bottomRow >= 0 && bottomRow < levelHeight && midCol >= 0 && midCol < levelWidth){
-				if (lvl[bottomRow][midCol] == '#'){
+				if (lvl[bottomRow][midCol] == '#' || lvl[bottomRow][midCol] == 'L' || lvl[bottomRow][midCol] == 'R'){
 					//adjust buulet y to be on top of platform
 					bullety[i] = bottomRow * cell_size - bh;
 					speedy[i] = 0;
@@ -644,7 +655,7 @@ void updatebullets(char** lvl,int levelWidth,int levelHeight,int cell_size,int b
 				} else {
 					if (speedy[i] == 0){
 						int belowRow = (bullety[i] + bh + 1) / cell_size;
-						if (belowRow >= levelHeight || lvl[belowRow][midCol] != '#'){
+						if (belowRow >= levelHeight || (lvl[belowRow][midCol] != '#' && lvl[belowRow][midCol] != 'L' && lvl[belowRow][midCol] != 'R'	)){
 							speedy[i] = gravity; // start falling
 						}
 					} else {
@@ -659,7 +670,7 @@ void updatebullets(char** lvl,int levelWidth,int levelHeight,int cell_size,int b
 		if (speedy[i] == 0 && speedx[i] != 0){
 			int belowRow = (bullety[i] + (int)bh + 1) / cell_size;
 			int midCol = (bulletx[i] + (int)(bw/2)) / cell_size;
-			if (belowRow >= levelHeight || midCol < 0 || midCol >= levelWidth || lvl[belowRow][midCol] != '#'){
+			if (belowRow >= levelHeight || midCol < 0 || midCol >= levelWidth || (lvl[belowRow][midCol] != '#' && lvl[belowRow][midCol] != 'L' && lvl[belowRow][midCol] != 'R')){
 				speedy[i] = gravity;
 			}
 		}
@@ -851,12 +862,78 @@ void initialize_level2(char** lvl,int width,int height){
 	for(int i=0;i<width;i++){
 		lvl[13][i] = '#';
 	}
-
-	for(int i=4;i<12;i++){
-		for(int j=4;j<11;j++)
-			if(i==j)
-				lvl[j][i]='#';
+	if (rand() % 2==3) {
+		// main diagonal (\)
+		for (int i = 4; i < 12; i++) {
+			for (int j = 4; j < 11; j++)
+				if (i == j)
+					lvl[j][i] = 'R';
+		}
+		for (int c = 1; c <= 3; ++c) {
+        lvl[4][c] = '#'; 
+    }
+    // lower pad below row 10: row 11, cols 8..10
+    for (int c = 10; c <= 12; ++c) {
+        lvl[10][c] = '#';
+    }
+	} else {
+		// secondary diagonal (/) 
+		for (int i = 4; i < 12; i++) {
+			for (int j = 4; j < 11; j++)
+				if (i + j == 15)
+					lvl[j][i] = 'L';
+		}
+		for (int c = 12; c <= 14; ++c) {
+        lvl[4][c] = '#';
+    }
+    // lower pad below row 10: row 11, cols 5..7
+    for (int c = 2; c <= 4; ++c) {
+        lvl[11][c] = '#';
+    }
 	}
+
+	int platforms_needed = (rand() % 2) + 5; // Generates 4 or 5
+    int attempts = 0; 
+
+    while (platforms_needed > 0 && attempts < 100) {
+        attempts++;
+
+        // random Length 4 to 6
+        int len = (rand() % 3) + 4; 
+
+        // Random Row: 3 to 11 (Avoids very top ceiling and very bottom floor)
+        int r = (rand() % 9) + 3; 
+
+        // random column ensure platform fits within width 
+        int c = (rand() % (width - len - 2)) + 1;
+
+        bool can_place = true;
+        for (int k = 0; k < len; k++) {
+            // If the spot is not empty,we cant build here
+            if (lvl[r][c + k] != '\0') {
+                can_place = false;
+                break;
+            }
+			//also check 3 rows below and above to ensure no overlapping
+		
+			for (int i = -3; i <= 3; i++) {
+                if (r + i < height) { // Ensure we don't look outside the map
+                    if (lvl[r + i][c + k] != '\0') {
+                        can_place = false; 
+                        break;
+                    }
+                }
+        }
+	}
+
+        // If clear, place the '#' blocks
+        if (can_place) {
+            for (int k = 0; k < len; k++) {
+                lvl[r][c + k] = '#';
+            }
+            platforms_needed--;
+        }
+    }
 
 }
 
@@ -881,6 +958,10 @@ int main()
 	Sprite bgSprite;
 	Texture blockTexture;
 	Sprite blockSprite;
+	Texture blockRTexture;
+	Sprite blockRSprite;
+	Texture blockLTexture;
+	Sprite blockLSprite;	
 	Texture chelnovtex;
 	Sprite chelnov;
 	Texture ghosttex;
@@ -919,6 +1000,10 @@ int main()
 
 	blockTexture.loadFromFile("Data/block1.png");
 	blockSprite.setTexture(blockTexture);
+	blockLTexture.loadFromFile("Data/blockL.png");
+	blockLSprite.setTexture(blockLTexture);
+	blockRTexture.loadFromFile("Data/blockR.png");			
+	blockRSprite.setTexture(blockRTexture);	
 
 	vacuumtex.loadFromFile("Assets/tumblepoppers.png");
 	vacuumsprite.setTexture(vacuumtex);
@@ -1117,7 +1202,7 @@ int main()
 		}
 		window.clear();
 
-		display_level(window, lvl, bgTex, bgSprite, blockTexture, blockSprite, height, width, cell_size);
+		display_level(window, lvl, bgTex, bgSprite, blockTexture, blockSprite, blockLTexture, blockLSprite, blockRTexture, blockRSprite,  height, width, cell_size);
 		player_gravity(lvl,offset_y,velocityY,onGround,gravity,terminal_Velocity, player_x, player_y, cell_size, PlayerHeight, PlayerWidth,isfacingleft);
 		PlayerSprite.setPosition(player_x, player_y);
 		if (lives == 0){
