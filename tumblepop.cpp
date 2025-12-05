@@ -538,7 +538,7 @@ if(Keyboard :: isKeyPressed(Keyboard::A) || Keyboard :: isKeyPressed(Keyboard::D
 
 
 }
-void shoot(Sprite bulletsprite[],int& captured,int vac_x,int vac_y, float speed,int bulletx[],int bullety[],bool isbulletactive[],int bulletspeedx[],int bulletspeeedy[],int& shoottimer,Texture& bursttex){
+void shoot(Sprite bulletsprite[],int& captured,int player_x,int player_y, float speed,int bulletx[],int bullety[],bool isbulletactive[],int bulletspeedx[],int bulletspeeedy[],int& shoottimer,Texture& bursttex){
 	
 	if (shoottimer > 0) {
 		shoottimer--;
@@ -550,16 +550,17 @@ void shoot(Sprite bulletsprite[],int& captured,int vac_x,int vac_y, float speed,
 	
 		int idx = 0;
 		bulletsprite[0].setTexture(bursttex);
-		bulletx[idx] = vac_x;
-		bullety[idx] = vac_y;
+		bulletx[idx] = player_x;
+		bullety[idx] = player_y;
 		bulletsprite[idx].setPosition(bulletx[idx], bullety[idx]);
 		isbulletactive[idx] = true;
 		
-		if (Keyboard::isKeyPressed(Keyboard::D) && speed > 0) { bulletspeedx[idx] = 12; bulletspeeedy[idx] = 0; }
-		else if (Keyboard::isKeyPressed(Keyboard::A) && speed < 0) { bulletspeedx[idx] = -12; bulletspeeedy[idx] = 0; }
-		else if (Keyboard::isKeyPressed(Keyboard::W)) { bulletspeedx[idx] = 0; bulletspeeedy[idx] = -12; }
-		else if (Keyboard::isKeyPressed(Keyboard::S)) { bulletspeedx[idx] = 0; bulletspeeedy[idx] = 12; }
-		else { bulletspeedx[idx] = (speed > 0) ? 12 : -12; bulletspeeedy[idx] = 0; }
+		if (Keyboard::isKeyPressed(Keyboard::D) && speed > 0) 
+		{ bulletspeedx[idx] = 5; bulletspeeedy[idx] = 0; }
+		else if (Keyboard::isKeyPressed(Keyboard::A) && speed < 0) { bulletspeedx[idx] = -5; bulletspeeedy[idx] = 0; }
+		else if (Keyboard::isKeyPressed(Keyboard::W)) { bulletspeedx[idx] = 0; bulletspeeedy[idx] = -5; }
+		else if (Keyboard::isKeyPressed(Keyboard::S)) { bulletspeedx[idx] = 0; bulletspeeedy[idx] = 5; }
+		else { bulletspeedx[idx] = (speed > 0) ? 5 : -5; bulletspeeedy[idx] = 0; }
 
 		shoottimer = 10;
 		// consume all captured
@@ -570,8 +571,8 @@ void shoot(Sprite bulletsprite[],int& captured,int vac_x,int vac_y, float speed,
 	if (captured <= 0) return;
 
 	// place the bullet at the vacuum position; adjust Y for horizontal shots so sprite sits on platform visually
-	bulletx[captured -1] = vac_x;
-	bullety[captured-1] = vac_y;
+	bulletx[captured -1] = player_x;
+	bullety[captured-1] = player_y;
 
 	bool fired = false;
 
@@ -631,9 +632,9 @@ void updatebullets(char** lvl,int levelWidth,int levelHeight,int cell_size,int b
 			speedy[i] = -(speedy[i]); // reverse direction to make it fall
 		}
 
-		// If bullet is moving down, check for platform collision beneath it
+		//if bullet is moving down, check for platform collision beneath it
 		if (speedy[i] >= 0){
-			int bottomRow = (bullety[i] + bh) / cell_size;//foot row mean
+			int bottomRow = (bullety[i] + bh) / cell_size;//
 			int midCol = (bulletx[i] + bw/2) / cell_size;//midcol
 			if (bottomRow >= 0 && bottomRow < levelHeight && midCol >= 0 && midCol < levelWidth){
 				if (lvl[bottomRow][midCol] == '#'){
@@ -647,24 +648,25 @@ void updatebullets(char** lvl,int levelWidth,int levelHeight,int cell_size,int b
 						if (belowRow >= levelHeight || lvl[belowRow][midCol] != '#'){
 							speedy[i] = gravity; // start falling
 						}
-					} else {
+					} 
+					else {
 						speedy[i] += gravity;
 						if (speedy[i] > 10) speedy[i] = 10;
-					}
 				}
 			}
+		}
 		}
 
 		// sliding off platform -> start falling
 		if (speedy[i] == 0 && speedx[i] != 0){
 			int belowRow = (bullety[i] + (int)bh + 1) / cell_size;
 			int midCol = (bulletx[i] + (int)(bw/2)) / cell_size;
-			if (belowRow >= levelHeight || midCol < 0 || midCol >= levelWidth || lvl[belowRow][midCol] != '#'){
+			if (belowRow >= levelHeight  || lvl[belowRow][midCol] != '#'){
 				speedy[i] = gravity;
 			}
 		}
 
-		int levelPixelW = levelWidth * cell_size;//calculate level widht in terms of pixels
+		int levelPixelW = levelWidth* cell_size;//calculate level widht in terms of pixels
 		int levelPixelH = levelHeight * cell_size;
 		if (bulletx[i] <= 0){
 			bulletx[i] = 0;
@@ -676,7 +678,7 @@ void updatebullets(char** lvl,int levelWidth,int levelHeight,int cell_size,int b
 		}
 
 		// deactivate only in bottom corners
-		if ((bullety[i] + bh >= levelPixelH) && (bulletx[i] <= 0 || bulletx[i] + bw >= levelPixelW)){
+		if ((bullety[i] + bh >= levelPixelH+cell_size) && (bulletx[i] <= 0 || bulletx[i] + bw >= levelPixelW)){
 			bulletactive[i] = false;
 			continue;
 		}
@@ -1187,7 +1189,7 @@ int main()
 		if(current_level==1){
 		// Player shooting: try to fire captured enemy as bullet
 		if (Keyboard::isKeyPressed(Keyboard::F))
-			shoot(bullets, captured, (int)vac_x, (int)vac_y, speed, bulletx, bullety, bulletactive, speedx, speedy, shoottimer,bursttex);
+			shoot(bullets, captured, player_x, player_y, speed, bulletx, bullety, bulletactive, speedx, speedy, shoottimer,bursttex);
 
 		// Update bullets (physics only) before level logic so level can check collisions
 		updatebullets(lvl, width, height, cell_size, bulletx, bullety, bulletactive, speedx, speedy, bullets, bullettype, maxbullets, (int)gravity);
