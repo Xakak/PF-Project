@@ -219,7 +219,9 @@ void suck(float speed,float& enemy_x,float &enemy_y,int enemy_w,int enemy_h, flo
 }
 
 
-void moveright(float &player_x,float& speed,Sprite& playerSprite,int& frame,int& timer){
+void moveright(float &player_x,float& speed,Sprite& playerSprite,int& frame,int& timer,bool Greenplayer){
+	if (Greenplayer) speed = 5;
+	else if (!Greenplayer) speed = 5*1.2;
 	if(speed < 0){
 		speed *= -1;
 	}
@@ -229,7 +231,11 @@ void moveright(float &player_x,float& speed,Sprite& playerSprite,int& frame,int&
 	}
 	timer++;
 	if (timer > 8){
-	playerSprite.setTextureRect(IntRect(317-(32*frame),36,32,45));
+		if (Greenplayer)
+			playerSprite.setTextureRect(IntRect(317-(32*frame),36,32,45));
+		if(!Greenplayer)
+			playerSprite.setTextureRect(IntRect(317-(32*frame),224,32,45));
+
 	if (frame > 2)
 		frame = 0;
 	frame++;
@@ -238,7 +244,9 @@ void moveright(float &player_x,float& speed,Sprite& playerSprite,int& frame,int&
 
 }
 
-void moveleft(float &player_x,float& speed,Sprite& playerSprite,int& frame, int& timer){
+void moveleft(float &player_x,float& speed,Sprite& playerSprite,int& frame, int& timer,bool Greenplayer){
+	if (Greenplayer) speed = 5;
+	else if (!Greenplayer) speed = 5*1.2;
 	if (speed > 0){
 		speed *= -1;
 	}
@@ -249,7 +257,10 @@ void moveleft(float &player_x,float& speed,Sprite& playerSprite,int& frame, int&
 	timer++;
 	playerSprite.setScale(3,3);
 	if (timer > 8){
-	playerSprite.setTextureRect(IntRect(317-(32*frame),36,32,45));
+	if (Greenplayer)
+			playerSprite.setTextureRect(IntRect(317-(32*frame),36,32,45));
+		if(!Greenplayer)
+			playerSprite.setTextureRect(IntRect(317-(32*frame),224,32,45));
 	if (frame > 2)
 		frame = 0;
 	frame++;
@@ -699,6 +710,31 @@ void updatebullets(char** lvl,int levelWidth,int levelHeight,int cell_size,int b
 void animbullet(){
 
 }
+void menu(Sprite& selectsprite,Sprite& arrow,bool& Greenplayer,int& current_level,int& arrowx){
+	selectsprite.setPosition(200,300);
+	
+	if(Keyboard::isKeyPressed(Keyboard::Left)){
+		arrowx = 200;//only setting x bc we need to check which character is selected
+		arrow.setPosition(arrowx,70);
+	}
+
+	else if (Keyboard::isKeyPressed(Keyboard::Right)){
+		arrowx = 650;
+		arrow.setPosition(arrowx,70);
+	}
+
+	if (Keyboard::isKeyPressed(Keyboard::Enter) && arrowx == 200){
+		
+		Greenplayer = false;
+		current_level = 1;
+	}
+
+	if (Keyboard::isKeyPressed(Keyboard::Enter) && arrowx == 650){
+		
+		Greenplayer = true;
+		current_level = 1;
+	}
+}
 void level_one(char **lvl,int width,int height,float ghost_x[8],float ghost_y[8],int ghost_speed[8],float skeleton_x[4],float skeleton_y[4],int skeleton_speed[4],float player_x,float player_y,int &lives,const int cell_size,int pwidth,int pheight,float &speed, Sprite ghostsprite[],bool isghostfacingleft[],int ghost_state[],int ghost_timer[],Sprite skeletonSprite[],bool isskeletonfacngleft[],int skeleton_state[],int skeleton_timer[], float& vac_x,float& vac_y,int& vacwidth,int& vacheight,bool isghostalive[],bool isskeletonalive[],int& captured,Texture& ghosttex,Texture& skeletonTex,Sprite bulletsprite[],int bullettype[],int bulletx[],int bullety[],bool bulletactive[],int speedx[],int speedy[],int maxbullets,int& shoottimer){
 	//platform to spawn player	
 	for(int i=8 ; i < 10; i++){
@@ -801,7 +837,7 @@ void level_one(char **lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 	}
 	
 	
-	// Bullet vs enemy collisions (level-specific)
+
 	
 	
 
@@ -975,10 +1011,19 @@ int main()
 	Texture vacuptex;
 	Sprite vacupsprite;
 	Texture bursttex;
+	Sprite arrowsprite;
+	Texture arrowtex;
+	Sprite selectsprite;
+	Texture selecttex;
 
 	bursttex.loadFromFile("Assets/burst.png");
+	selecttex.loadFromFile("Assets/select.png");
+	arrowtex.loadFromFile("Assets/arrow.png");
 
-
+	selectsprite.setTexture(selecttex);
+	arrowsprite.setTexture(arrowtex);
+	arrowsprite.setPosition(200,70);
+	arrowsprite.setScale(0.5,0.5);
 
 	ghosttex.loadFromFile("Assets/ghost.png");
 	for (int i = 0; i < 8; i++){
@@ -1121,8 +1166,8 @@ int main()
 	RectangleShape hitbox;
 	hitbox.setSize(Vector2f(96,96));
 	float hitx = player_x;
-
-
+	int arrowx = 200;
+	bool Greenplayer = true;//to check which tumble popper to use
 	int frame = 0;
 	int timer = 0;
 	int shoottimer = 10;
@@ -1171,7 +1216,7 @@ int main()
 
 	
 	//levels
-	int current_level=1;
+	int current_level=0;
 	int level2Loaded = false;
 
 
@@ -1203,7 +1248,14 @@ int main()
 			window.close();
 		}
 		window.clear();
-
+		if(current_level == 0){
+			menu(selectsprite,arrowsprite,Greenplayer,current_level,arrowx);
+			window.draw(bgSprite);
+			window.draw(selectsprite);
+			window.draw(arrowsprite);
+		}
+		else{
+			cout<<Greenplayer<<endl;
 		display_level(window, lvl, bgTex, bgSprite, blockTexture, blockSprite, blockLTexture, blockLSprite, blockRTexture, blockRSprite,  height, width, cell_size);
 		player_gravity(lvl,offset_y,velocityY,onGround,gravity,terminal_Velocity, player_x, player_y, cell_size, PlayerHeight, PlayerWidth,isfacingleft);
 		PlayerSprite.setPosition(player_x, player_y);
@@ -1221,7 +1273,7 @@ int main()
 			PlayerSprite.setPosition(player_x, player_y);
 			PlayerSprite.setScale(-3,3);
 
-			moveright(player_x,speed,PlayerSprite,frame,timer);
+			moveright(player_x,speed,PlayerSprite,frame,timer,Greenplayer);
 			
 		}
 		else if (Keyboard::isKeyPressed(Keyboard::Left) && !isdead){
@@ -1230,15 +1282,22 @@ int main()
 				isfacingleft = true;
 			}
 			PlayerSprite.setPosition(player_x, player_y);
-			moveleft(player_x,speed,PlayerSprite,frame,timer);
+			moveleft(player_x,speed,PlayerSprite,frame,timer,Greenplayer);
 		}
 		
 	
 		else if (!onGround){//jumping animation
+			if (Greenplayer)
 			PlayerSprite.setTextureRect(IntRect(525,30,30,42));
+			if (!Greenplayer)
+			PlayerSprite.setTextureRect(IntRect(524,219,30,42));
+			
 		}
 		else {//stand still animation
-		PlayerSprite.setTextureRect(IntRect(12,36,32,45));
+		if(Greenplayer)
+			PlayerSprite.setTextureRect(IntRect(12,36,32,45));
+		if(!Greenplayer)
+			PlayerSprite.setTextureRect(IntRect(12,224,32,45));
 		frame = 0;
 		}
 		//vaccum
@@ -1272,14 +1331,14 @@ int main()
 
 
 		if(current_level==1){
-		// Player shooting: try to fire captured enemy as bullet
+		// Player shooting try to fire captured enemy as bullet
 		if (Keyboard::isKeyPressed(Keyboard::F))
 			shoot(bullets, captured, player_x, player_y, speed, bulletx, bullety, bulletactive, speedx, speedy, shoottimer,bursttex);
 
 		// Update bullets (physics only) before level logic so level can check collisions
 		updatebullets(lvl, width, height, cell_size, bulletx, bullety, bulletactive, speedx, speedy, bullets, bullettype, maxbullets, (int)gravity);
 
-		// Level-specific logic and now level-side bullet collision checks
+		// Levelspecific logic and now level-side bullet collision checks
 		level_one(lvl,width,height,ghost_x,ghost_y,ghost_speed,skeleton_x,skeleton_y,skeleton_speed,player_x,player_y,lives,cell_size,PlayerWidth,PlayerHeight,speed,ghostsprite,isghostfacingleft,ghost_state,ghost_timer,skeletonSprite,isskeletonfacingleft,skeleton_state,skeleton_timer,vac_x,vac_y,vacwidth,vacheight,isghostalive,isskeletonalive,captured,ghosttex,skeletonTex,bullets,bullettype,bulletx,bullety,bulletactive,speedx,speedy,maxbullets,shoottimer);
 
 		// Draw active bullets
@@ -1338,7 +1397,7 @@ else if(current_level==2){
     for(int i=0; i<8; i++) if(isghostalive[i]) ghosts_left++;
     for(int i=0; i<4; i++) if(isskeletonalive[i]) skels_left++;
     
-    
+}
 	window.display();
 
 
