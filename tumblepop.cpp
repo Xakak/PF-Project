@@ -81,49 +81,28 @@ void player_gravity(char** lvl, float& offset_y, float& velocityY, bool& onGroun
     char bottom_right_down = lvl[(int)(offset_y + Pheight) / cell_size][(int)(player_x-x + Pwidth) / cell_size];
     char bottom_mid_down = lvl[(int)(offset_y + Pheight) / cell_size][(int)(player_x -x+ Pwidth / 2) / cell_size];
 
-	bool touching_flat = (bottom_left_down == '#' || bottom_right_down == '#' || bottom_mid_down == '#');
-    // 2. Check for SLOPED Platform collision (L or R)
-    bool touching_L = (bottom_left_down == 'L' || bottom_right_down == 'L' || bottom_mid_down == 'L');
-    bool touching_R = (bottom_left_down == 'R' || bottom_right_down == 'R' || bottom_mid_down == 'R');
-
     if (velocityY >= 0)//if going down check for collision and above platform
     {
         // Calculate the grid row where the feet are currently(taken from above)
         int feet_row = (int)(offset_y + Pheight) / cell_size;
         
-        
+        if (bottom_left_down == '#' || bottom_right_down == '#' || bottom_mid_down == '#' ||
+			bottom_left_down == 'L' || bottom_right_down == 'L' || bottom_mid_down == 'L' ||
+			bottom_left_down == 'R' || bottom_right_down == 'R' || bottom_mid_down == 'R')//if below is platform
+        {
             float platform_top = feet_row * cell_size;//same as feet_row because feet is on platform
             float old_feet_y = player_y + Pheight;
 
             if (old_feet_y <= platform_top + 5) //if sprite was above the platform ( the lower we go the y coordinate increases) 
             {
-				if(touching_flat){
-					player_y = platform_top - Pheight;//teleports to top of platform to avoid sticking in middle  {player_y is the top left corner of sprite hitbox so subtract
-					// P_height to appear at top, in y axis subtract means to go up}
-					
-					velocityY = 0;
-					onGround = true;
-					return; // Exit function so it doesnot go down
-				}
-				else if (touching_L || touching_R) 
-            {
-					float slide_speed = 5.0f;
-
-					
-					if (touching_R) {
-						player_x += slide_speed;
-						onGround = true;
-					}
-					
-					else if (touching_L) {
-						player_x -= slide_speed; 
-						onGround = true;
-					}
-
-					return;
+                player_y = platform_top - Pheight;//teleports to top of platform to avoid sticking in middle  {player_y is the top left corner of sprite hitbox so subtract
+				// P_height to appear at top, in y axis subtract means to go up}
+				
+                velocityY = 0;
+                onGround = true;
+                return; // Exit function so it doesnot go down
             }
-            }
-        
+        }
     }
 	
 	//if going up ignore collision
@@ -591,6 +570,7 @@ void shoot(Sprite bulletsprite[],int& captured,int player_x,int player_y, float 
 	
 		int idx = 0;
 		bulletsprite[0].setTexture(bursttex);
+		bulletsprite[0].setTextureRect(IntRect(6,15,79,65));
 		bulletx[idx] = player_x;
 		bullety[idx] = player_y;
 		bulletsprite[idx].setPosition(bulletx[idx], bullety[idx]);
@@ -755,6 +735,169 @@ void menu(Sprite& selectsprite,Sprite& arrow,bool& Greenplayer,int& current_leve
 		current_level = 1;
 	}
 }
+
+bool enemy_gravity(char** lvl, float& x, float& y, int width, int height, int cell_size) {
+    // Check the bottom left and bottomright corners
+    int feet_y = (int)(y + height) / cell_size;
+    int left_x = (int)(x + 10) / cell_size;       // +10 to avoid edge clipping
+    int right_x = (int)(x + width - 10) / cell_size;
+
+
+    // Check blocks below
+    char block_left = lvl[feet_y][left_x];
+    char block_right = lvl[feet_y][right_x];
+
+    if (block_left != '#' && block_right != '#') {
+        // No ground below either foot soo fall
+        y += 5.0f; 
+		return false;
+    } 
+    else {
+        // movee to top of block 
+        float ground_top = feet_y * cell_size;
+        if (y + height > ground_top && y + height < ground_top + 15) {
+            y = ground_top - height;
+        }
+		return true;
+    }
+}
+void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8],int ghost_speed[8],float skeleton_x[4],float skeleton_y[4],int skeleton_speed[4],float player_x,float player_y,int &lives,const int cell_size,int pwidth,int pheight,float &speed, Sprite ghostsprite[],bool isghostfacingleft[],int ghost_state[],int ghost_timer[],Sprite skeletonSprite[],bool isskeletonfacngleft[],int skeleton_state[],int skeleton_timer[], float& vac_x,float& vac_y,int& vacwidth,int& vacheight,bool isghostalive[],bool isskeletonalive[],int& captured,Texture& ghosttex,Texture& skeletonTex,Sprite bulletsprite[],int bullettype[],int bulletx[],int bullety[],bool bulletactive[],int speedx[],int speedy[],int maxbullets,int& shoottimer,int& gspawntimer,int&sspawntimer,int& skeleton_spawned,int&ghost_spawned){
+	gspawntimer++;
+	if (gspawntimer > 240){
+		if (ghost_spawned< 4){
+			isghostalive[ghost_spawned] = true;
+            ghost_spawned++;
+            gspawntimer = 0;
+		}
+	}
+	sspawntimer++;
+	if (sspawntimer > 240){
+		if(skeleton_spawned < 9){
+			isskeletonalive[skeleton_spawned] = true;
+			skeleton_spawned++;
+			sspawntimer = 0;
+		}
+	}
+	//call and control ghost
+	
+	ghosts(ghost_x,ghost_speed,4,ghostsprite,isghostfacingleft,ghost_state,ghost_timer);
+	skeletons(skeleton_x,skeleton_y,skeleton_speed,9,skeletonSprite,isskeletonfacngleft,skeleton_state,skeleton_timer,cell_size);
+	
+	for(int i = 0; i < 4; i++){
+		bool enemyonground = enemy_gravity(lvl, ghost_x[i], ghost_y[i], 96, 120, cell_size);
+		if (enemyonground){
+		if(onplatform(lvl,96,120,ghost_x[i],ghost_y[i],cell_size,ghost_speed[i]) == false){
+			ghost_speed[i] *= -1;
+		}
+	}
+	}
+	for (int i = 0; i < 4; i++){
+		if(checkcollision(player_x,player_y,pwidth,pheight,ghost_x[i],ghost_y[i],60,80,speed,ghost_speed[i]) && isghostalive[i])//smaller dimensions of ghost passed to fix collision when jumping
+		lives = 0;
+	}
+	
+	for(int i = 0; i < 9; i++){
+		bool enemyonground = enemy_gravity(lvl, skeleton_x[i], skeleton_y[i], 120, 225, cell_size);
+		if (enemyonground){
+		if(onplatform(lvl,120,225,skeleton_x[i],skeleton_y[i],cell_size,skeleton_speed[i]) == false){
+			skeleton_speed[i] *= -1;
+		}
+	}
+	}
+	for (int i = 0; i < 9; i++){
+		if(checkcollision(player_x,player_y,pwidth,pheight,skeleton_x[i],skeleton_y[i],60,175,speed,skeleton_speed[i]) && isskeletonalive[i])//smaller dimensions of skeleton passed to fix collision when jumping
+		lives = 0;
+	}
+
+		if (Keyboard :: isKeyPressed(Keyboard::Space)){
+		for (int i = 0; i < 4; i++){
+			//check collision between vacuum and ghost
+			if(checkcollision(vac_x,vac_y,vacwidth,vacheight,ghost_x[i],ghost_y[i],120,120,speed,ghost_speed[i]) && captured < 3 ){
+				bool isalive = isghostalive[i];
+				suck(speed,ghost_x[i],ghost_y[i],120,120,ghost_speed[i],player_x,player_y,pwidth,pheight,ghostsprite[i],isghostalive[i]);
+				if (isghostalive[i]){
+				bullettype[captured] = 0;//0 for ghost
+				bulletsprite[captured].setTexture(ghosttex);
+				bulletsprite[captured].setScale(3,3);
+				bulletsprite[captured].setTextureRect(IntRect(936,9,32,30));
+				}
+				if (!isghostalive[i] && isalive){
+					captured++;//only increment captured when the ghost was alive before and is dead now
+				}
+			
+			}
+			
+		}
+	}
+	if (Keyboard :: isKeyPressed(Keyboard::Space)){
+		for (int i = 0; i< 9; i++){
+			//check collision between vacuum and skeleton
+		if (checkcollision(vac_x,vac_y,vacwidth,vacheight,skeleton_x[i],skeleton_y[i],60,175,speed,skeleton_speed[i]) && captured < 3){
+				bool isalive = isskeletonalive[i];
+				suck(speed,skeleton_x[i],skeleton_y[i],60,175,skeleton_speed[i],player_x,player_y,pwidth,pheight,skeletonSprite[i],isskeletonalive[i]);
+				if(isskeletonalive[i]){
+				bullettype[captured] = 1;//1 for skeleton
+				bulletsprite[captured].setTexture(skeletonTex);
+				bulletsprite[captured].setScale(3,3);
+				bulletsprite[captured].setTextureRect(IntRect(1039,39,32,32));
+				}
+				if(!isskeletonalive[i] && isalive){
+					captured++;//only increment captured when the skeleton was alive before and is dead now
+				}
+				
+				
+			}
+		}
+	}
+
+	for (int i = 0;i < 4; i++){
+		if(isghostalive[i])
+			ghostsprite[i].setPosition(ghost_x[i],ghost_y[i]);
+		}
+	for (int i = 0; i < 9; i++){
+		if (isskeletonalive[i]){
+			skeletonSprite[i].setPosition(skeleton_x[i],skeleton_y[i]); 
+		}
+		
+	}
+	
+	
+
+	
+	
+
+	for (int b = 0; b < maxbullets; b++){
+		if (bulletactive[b]) {
+		
+		// ghosts
+		for (int g = 0; g < 4; g++){
+			if (isghostalive[g]) {
+			if (checkcollision(bulletx[b], bullety[b], 96, 96, ghost_x[g], ghost_y[g], 120, 120, speedx[b], ghost_speed[g])){
+				isghostalive[g] = false;
+				bulletactive[b] = false;
+				break;
+			}
+		}
+		}
+		if (bulletactive[b]) {
+
+		// skeletons
+		for (int s = 0; s < 9; s++){
+			if (isskeletonalive[s]) {
+			if (checkcollision(bulletx[b], bullety[b], 96, 96, skeleton_x[s], skeleton_y[s], 60, 175, speedx[b], skeleton_speed[s])){
+				isskeletonalive[s] = false;
+				bulletactive[b] = false;
+				break;
+			}
+		}
+		}
+	}
+	}
+	}
+
+
+
+}
 void level_one(char **lvl,int width,int height,float ghost_x[8],float ghost_y[8],int ghost_speed[8],float skeleton_x[4],float skeleton_y[4],int skeleton_speed[4],float player_x,float player_y,int &lives,const int cell_size,int pwidth,int pheight,float &speed, Sprite ghostsprite[],bool isghostfacingleft[],int ghost_state[],int ghost_timer[],Sprite skeletonSprite[],bool isskeletonfacngleft[],int skeleton_state[],int skeleton_timer[], float& vac_x,float& vac_y,int& vacwidth,int& vacheight,bool isghostalive[],bool isskeletonalive[],int& captured,Texture& ghosttex,Texture& skeletonTex,Sprite bulletsprite[],int bullettype[],int bulletx[],int bullety[],bool bulletactive[],int speedx[],int speedy[],int maxbullets,int& shoottimer){
 	//platform to spawn player	
 	for(int i=8 ; i < 10; i++){
@@ -865,7 +1008,7 @@ void level_one(char **lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 		if (bulletactive[b]) {
 		
 		// ghosts
-		for (int g = 0; g < 8; g++){
+		for (int g = 0; g < 4; g++){
 			if (isghostalive[g]) {
 			if (checkcollision(bulletx[b], bullety[b], 96, 96, ghost_x[g], ghost_y[g], 120, 120, speedx[b], ghost_speed[g])){
 				isghostalive[g] = false;
@@ -1028,7 +1171,7 @@ int main()
 	Texture vacuumtex;
 	Sprite vacuumsprite;
 	Texture skeletonTex;
-	Sprite skeletonSprite[4];
+	Sprite skeletonSprite[9];
 	Texture vacuptex;
 	Sprite vacupsprite;
 	Texture bursttex;
@@ -1053,7 +1196,7 @@ int main()
 	}
 	
 	skeletonTex.loadFromFile("Assets/skeleton.png");
-	for (int i = 0; i < 4; i++){
+	for (int i = 0; i < 9; i++){
 		skeletonSprite[i].setTexture(skeletonTex);
 		skeletonSprite[i].setTextureRect(IntRect(0,0,40,75));
 		
@@ -1105,13 +1248,13 @@ int main()
 		ghost_timer[i] = rand() % (120);
 	int ghost_speed[8] = {2,2,2,2,2,2,2,2};
 
-	float skeleton_x[4]={5*cell_size,5*cell_size,4*cell_size,12*cell_size};
-	float skeleton_y[4]={3*cell_size-225,9*cell_size-225,13*cell_size-225,13*cell_size-225};
-	int skeleton_state[4]={1,1,1,1};
-	int skeleton_timer[4];
-	for(int i=0; i< 4; i++)
+	float skeleton_x[9]={5*cell_size,5*cell_size,4*cell_size,12*cell_size};
+	float skeleton_y[9]={3*cell_size-225,9*cell_size-225,13*cell_size-225,13*cell_size-225};
+	int skeleton_state[9]={1,1,1,1,1,1,1,1,1};
+	int skeleton_timer[9];
+	for(int i=0; i< 9; i++)
 		skeleton_timer[i] = rand () % 120;
-	int skeleton_speed[4]={3,3,3,3};
+	int skeleton_speed[9]={3,3,3,3,3,3,3,3,3};
 
 	float vac_x;
 	float vac_y;
@@ -1186,6 +1329,10 @@ int main()
 
 	RectangleShape hitbox;
 	hitbox.setSize(Vector2f(96,96));
+	int gspawntimer = 0;
+	int ghost_spawned = 0;
+	int sspawntimer = 0;
+	int skeleton_spawned = 0;
 	float hitx = player_x;
 	int arrowx = 200;
 	bool Greenplayer = true;//to check which tumble popper to use
@@ -1196,11 +1343,11 @@ int main()
 	int vactim = 0;
 	bool isdead = false;
 	bool isfacingleft = false;
-	bool isskeletonfacingleft[8];
+	bool isskeletonfacingleft[9];
 	bool isghostalive[8];
-	bool isskeletonalive[4];
+	bool isskeletonalive[9];
 	int captured = 0;//no of enemies captured
-	const int maxbullets = 3;
+	const int maxbullets = 5;
 	Sprite bullets[maxbullets];
 	int bulletx[maxbullets];
 	int bullety[maxbullets];
@@ -1222,7 +1369,7 @@ int main()
 
 	
 		
-	for (int i = 0; i<8; i++){
+	for (int i = 0; i<9; i++){
 		
 		isskeletonfacingleft[i] = false;
 		isskeletonalive[i] = true;
@@ -1276,7 +1423,7 @@ int main()
 			window.draw(arrowsprite);
 		}
 		else{
-			cout<<Greenplayer<<endl;
+			
 		display_level(window, lvl, bgTex, bgSprite, blockTexture, blockSprite, blockLTexture, blockLSprite, blockRTexture, blockRSprite,  height, width, cell_size);
 		player_gravity(lvl,offset_y,velocityY,onGround,gravity,terminal_Velocity, player_x, player_y, cell_size, PlayerHeight, PlayerWidth,isfacingleft);
 		PlayerSprite.setPosition(player_x, player_y);
@@ -1295,8 +1442,7 @@ int main()
 			PlayerSprite.setScale(-3,3);
 
 			moveright(player_x,speed,PlayerSprite,frame,timer,Greenplayer);
-			cout<<player_x<<endl;
-			cout<<player_y<<endl;
+			
 		}
 		else if (Keyboard::isKeyPressed(Keyboard::Left) && !isdead){
 			if (isfacingleft == false){
@@ -1305,8 +1451,6 @@ int main()
 			}
 			PlayerSprite.setPosition(player_x, player_y);
 			moveleft(player_x,speed,PlayerSprite,frame,timer,Greenplayer);
-			cout<<player_x<<endl;
-			cout<<player_y<<endl;	
 		}
 		
 	
@@ -1366,7 +1510,7 @@ int main()
 		level_one(lvl,width,height,ghost_x,ghost_y,ghost_speed,skeleton_x,skeleton_y,skeleton_speed,player_x,player_y,lives,cell_size,PlayerWidth,PlayerHeight,speed,ghostsprite,isghostfacingleft,ghost_state,ghost_timer,skeletonSprite,isskeletonfacingleft,skeleton_state,skeleton_timer,vac_x,vac_y,vacwidth,vacheight,isghostalive,isskeletonalive,captured,ghosttex,skeletonTex,bullets,bullettype,bulletx,bullety,bulletactive,speedx,speedy,maxbullets,shoottimer);
 
 		// Draw active bullets
-		for (int b = 0; b < maxbullets; b++){
+		for (int b = 0; b < 3; b++){
 			if (bulletactive[b]){
 				bullets[b].setPosition(bulletx[b], bullety[b]);
 				window.draw(bullets[b]);
@@ -1403,20 +1547,68 @@ int main()
 			current_level = 2;
 	
 }
+
 else if(current_level==2){
 	if(!level2Loaded){
 		initialize_level2(lvl,width,height);
 		level2Loaded = true;
+		//reset the variables from level one
+		for (int i = 0; i<4; i++) 
+			isghostalive[i] = false;
+		for (int i = 0 ; i<9; i++)
+			isskeletonalive[i] = false;
+		ghost_x[0] = 110; ghost_y[0] = 700;
+        ghost_x[1] = 110; ghost_y[1] = 700;
+        ghost_x[2] = 100; ghost_y[2] = 700;
+        ghost_x[3] = 15*cell_size; ghost_y[3] = 13*cell_size - 120;
+		skeleton_x[0] = 3 * cell_size;  skeleton_y[0] = 3 * cell_size;
+		skeleton_x[1] = 5 * cell_size;  skeleton_y[1] = 3 * cell_size;
+		
+		// Top Right area
+		skeleton_x[2] = 12 * cell_size; skeleton_y[2] = 3 * cell_size;
+		skeleton_x[3] = 14 * cell_size; skeleton_y[3] = 3 * cell_size;
 
+		// Bottom Left area
+		skeleton_x[4] = 3 * cell_size;  skeleton_y[4] = 10 * cell_size;
+		skeleton_x[5] = 5 * cell_size;  skeleton_y[5] = 10 * cell_size;
+
+		// Bottom Right area
+		skeleton_x[6] = 12 * cell_size; skeleton_y[6] = 10 * cell_size;
+		skeleton_x[7] = 14 * cell_size; skeleton_y[7] = 10 * cell_size;
+
+		// Middle Top
+		skeleton_x[8] = 9 * cell_size;  skeleton_y[8] = 2 * cell_size;
 
 	}
+	// Player shooting try to fire captured enemy as bullet
+		if (Keyboard::isKeyPressed(Keyboard::F))
+			shoot(bullets, captured, player_x, player_y, speed, bulletx, bullety, bulletactive, speedx, speedy, shoottimer,bursttex);
 
-
-
-
+		// Update bullets (physics only) before level logic so level can check collisions
+		updatebullets(lvl, width, height, cell_size, bulletx, bullety, bulletactive, speedx, speedy, bullets, bullettype, maxbullets, gravity);
+	level_two(lvl,width,height,ghost_x,ghost_y,ghost_speed,skeleton_x,skeleton_y,skeleton_speed,player_x,player_y,lives,cell_size,PlayerWidth,PlayerHeight,speed,ghostsprite,isghostfacingleft,ghost_state,ghost_timer,skeletonSprite,isskeletonfacingleft,skeleton_state,skeleton_timer,vac_x,vac_y,vacwidth,vacheight,isghostalive,isskeletonalive,captured,ghosttex,skeletonTex,bullets,bullettype,bulletx,bullety,bulletactive,speedx,speedy,maxbullets,shoottimer,gspawntimer,sspawntimer,ghost_spawned,skeleton_spawned);
+	for (int i =0 ; i < 4; i++){
+		if(isghostalive[i]){
+			window.draw(ghostsprite[i]);
+			enemy_gravity(lvl, ghost_x[i], ghost_y[i], 96, 120, cell_size);
+		}
+	}
+	for(int i = 0 ; i < 9 ; i++){
+		if (isskeletonalive[i]){
+			enemy_gravity(lvl, skeleton_x[i], skeleton_y[i], 120, 225, cell_size);
+			window.draw(skeletonSprite[i]);
+		}
+	}
+	for (int b = 0; b < 3; b++){
+			if (bulletactive[b]){
+				bullets[b].setPosition(bulletx[b], bullety[b]);
+				window.draw(bullets[b]);
+			}
+		}
 
 }
 	int ghosts_left = 0;
+	
     int skels_left = 0;
     for(int i=0; i<8; i++) if(isghostalive[i]) ghosts_left++;
     for(int i=0; i<4; i++) if(isskeletonalive[i]) skels_left++;
