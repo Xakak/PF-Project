@@ -109,8 +109,6 @@ void player_gravity(char** lvl, float& offset_y, float& velocityY, bool& onGroun
     player_y = offset_y;
     velocityY += gravity;
     if (velocityY >= terminal_Velocity) velocityY = terminal_Velocity;
-		
-
 }
 
 
@@ -679,6 +677,7 @@ void updatebullets(char** lvl,int levelWidth,int levelHeight,int cell_size,int b
 		}
 		}
 
+
 		// sliding off platform -> start falling
 		if (speedy[i] == 0 && speedx[i] != 0){
 			int belowRow = (bullety[i] + (int)bh + 1) / cell_size;
@@ -900,7 +899,7 @@ void initialize_level2(char** lvl,int width,int height){
 	for(int i=0;i<width;i++){
 		lvl[13][i] = '#';
 	}
-	if (rand() % 2==3) {
+	if (rand() % 2==0) {
 		// main diagonal (\)
 		for (int i = 4; i < 12; i++) {
 			for (int j = 4; j < 11; j++)
@@ -914,7 +913,8 @@ void initialize_level2(char** lvl,int width,int height){
     for (int c = 10; c <= 12; ++c) {
         lvl[10][c] = '#';
     }
-	} else {
+	} 
+	else {
 		// secondary diagonal (/) 
 		for (int i = 4; i < 12; i++) {
 			for (int j = 4; j < 11; j++)
@@ -930,10 +930,10 @@ void initialize_level2(char** lvl,int width,int height){
     }
 	}
 
-	int platforms_needed = (rand() % 2) + 5; // Generates 4 or 5
+	int platforms_needed = (rand() % 2) + 4; // Generates 4 or 5
     int attempts = 0; 
 
-    while (platforms_needed > 0 && attempts < 100) {
+    while (platforms_needed > 0 && attempts < 500) {
         attempts++;
 
         // random Length 4 to 6
@@ -952,9 +952,9 @@ void initialize_level2(char** lvl,int width,int height){
                 can_place = false;
                 break;
             }
-			//also check 3 rows below and above to ensure no overlapping
+			//also check 2 rows below and above to ensure no overlapping
 		
-			for (int i = -3; i <= 3; i++) {
+			for (int i = -2; i <= 2; i++) {
                 if (r + i < height) { // Ensure we don't look outside the map
                     if (lvl[r + i][c + k] != '\0') {
                         can_place = false; 
