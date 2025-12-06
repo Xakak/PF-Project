@@ -763,7 +763,7 @@ bool enemy_gravity(char** lvl, float& x, float& y, int width, int height, int ce
 }
 void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8],int ghost_speed[8],float skeleton_x[4],float skeleton_y[4],int skeleton_speed[4],float player_x,float player_y,int &lives,const int cell_size,int pwidth,int pheight,float &speed, Sprite ghostsprite[],bool isghostfacingleft[],int ghost_state[],int ghost_timer[],Sprite skeletonSprite[],bool isskeletonfacngleft[],int skeleton_state[],int skeleton_timer[], float& vac_x,float& vac_y,int& vacwidth,int& vacheight,bool isghostalive[],bool isskeletonalive[],int& captured,Texture& ghosttex,Texture& skeletonTex,Sprite bulletsprite[],int bullettype[],int bulletx[],int bullety[],bool bulletactive[],int speedx[],int speedy[],int maxbullets,int& shoottimer,int& gspawntimer,int&sspawntimer,int& skeleton_spawned,int&ghost_spawned){
 	gspawntimer++;
-	if (gspawntimer > 240){
+	if (gspawntimer > 240){//240 will spawn a ghost every 4 seconds
 		if (ghost_spawned< 4){
 			isghostalive[ghost_spawned] = true;
             ghost_spawned++;
@@ -1008,14 +1008,21 @@ void level_one(char **lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 		if (bulletactive[b]) {
 		
 		// ghosts
-		for (int g = 0; g < 4; g++){
+				for (int g = 0; g < 8; g++){
 			if (isghostalive[g]) {
-			if (checkcollision(bulletx[b], bullety[b], 96, 96, ghost_x[g], ghost_y[g], 120, 120, speedx[b], ghost_speed[g])){
-				isghostalive[g] = false;
-				bulletactive[b] = false;
-				break;
+				int bw = 96; int bh = 96;
+				int gw = 120; int gh = 120;
+				float bx = (float)bulletx[b];
+				float by = (float)bullety[b];
+				float gx = ghost_x[g];
+				float gy = ghost_y[g];
+				
+				if (!(bx + bw < gx || bx > gx + gw || by + bh < gy || by > gy + gh)){
+					isghostalive[g] = false;
+					bulletactive[b] = false;
+					break;
+				}
 			}
-		}
 		}
 		if (bulletactive[b]) {
 
@@ -1238,7 +1245,7 @@ int main()
 	float player_x = 650;
 	float player_y = 150;
 	float speed = 5;
-
+	
 
 	float ghost_x[8]={4*cell_size,15*cell_size,30,1000,4*cell_size,15*cell_size,30,15*cell_size};
 	float ghost_y[8]={3*cell_size-120,3*cell_size-120,6*cell_size-120,6*cell_size-120,9*cell_size-120,9*cell_size-120,13*cell_size-120,13*cell_size-120};
@@ -1367,7 +1374,10 @@ int main()
 		bullets[i].setPosition(-1000, -1000);
 	}
 
-	
+	cout << ghostsprite[1].getGlobalBounds().width 
+     << "  " 
+     << ghostsprite[1].getGlobalBounds().height << endl;
+
 		
 	for (int i = 0; i<9; i++){
 		
@@ -1384,7 +1394,7 @@ int main()
 
 	
 	//levels
-	int current_level=0;
+	int current_level=2;
 	int level2Loaded = false;
 
 
