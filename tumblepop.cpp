@@ -592,6 +592,7 @@ void shoot(Sprite bulletsprite[],int& captured,int player_x,int player_y, float 
 		int idx = 0;
 		bulletsprite[0].setTexture(bursttex); 
 		bulletsprite[0].setTextureRect(IntRect(6, 15, 79, 65));	
+		bulletsprite[0].setScale(1, 1);
 		bulletx[idx] = player_x;
 		bullety[idx] = player_y;
 		bulletsprite[idx].setPosition(bulletx[idx], bullety[idx]);
@@ -892,13 +893,20 @@ void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 		
 		// ghosts
 		for (int g = 0; g < 4; g++){
-			if (isghostalive[g]) {
-			if (checkcollision(bulletx[b], bullety[b], 96, 96, ghost_x[g], ghost_y[g], 120, 120, speedx[b], ghost_speed[g])){
-				isghostalive[g] = false;
-				bulletactive[b] = false;
-				break;
+		if (isghostalive[g]) {
+				int bw = 96; int bh = 96;
+				int gw = 120; int gh = 120;
+				float bx = (float)bulletx[b];
+				float by = (float)bullety[b];
+				float gx = ghost_x[g];
+				float gy = ghost_y[g];
+				
+				if (!(bx + bw < gx || bx > gx + gw || by + bh < gy || by > gy + gh)){
+					isghostalive[g] = false;
+					bulletactive[b] = false;
+					break;
+				}
 			}
-		}
 		}
 		if (bulletactive[b]) {
 
@@ -1344,7 +1352,7 @@ int main()
 		ghostsprite[i].setScale(3,3);
 	}
 
-	for (int i = 0; i< 4; i++){
+	for (int i = 0; i< 9; i++){
 		skeletonSprite[i].setScale(3,3);
 	}
 	
@@ -1374,7 +1382,7 @@ int main()
 	bool isfacingleft = false;
 	bool isskeletonfacingleft[8];
 	bool isghostalive[8];
-	bool isskeletonalive[4];
+	bool isskeletonalive[9];
 	int captured = 0;//no of enemies captured
 	const int maxbullets = 3;
 	Sprite bullets[maxbullets];
@@ -1613,7 +1621,6 @@ int main()
 		if (Keyboard::isKeyPressed(Keyboard::F))
 			shoot(bullets, captured, player_x, player_y, speed, bulletx, bullety, bulletactive, speedx, speedy, shoottimer,bursttex);
 
-		// Update bullets (physics only) before level logic so level can check collisions
 		updatebullets(lvl, width, height, cell_size, bulletx, bullety, bulletactive, speedx, speedy, bullets, bullettype, maxbullets, gravity);
 	level_two(lvl,width,height,ghost_x,ghost_y,ghost_speed,skeleton_x,skeleton_y,skeleton_speed,player_x,player_y,lives,cell_size,PlayerWidth,PlayerHeight,speed,ghostsprite,isghostfacingleft,ghost_state,ghost_timer,skeletonSprite,isskeletonfacingleft,skeleton_state,skeleton_timer,vac_x,vac_y,vacwidth,vacheight,isghostalive,isskeletonalive,captured,ghosttex,skeletonTex,bullets,bullettype,bulletx,bullety,bulletactive,speedx,speedy,maxbullets,shoottimer,gspawntimer,sspawntimer,ghost_spawned,skeleton_spawned);
 	for (int i =0 ; i < 4; i++){
