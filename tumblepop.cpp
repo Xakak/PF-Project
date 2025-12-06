@@ -81,28 +81,49 @@ void player_gravity(char** lvl, float& offset_y, float& velocityY, bool& onGroun
     char bottom_right_down = lvl[(int)(offset_y + Pheight) / cell_size][(int)(player_x-x + Pwidth) / cell_size];
     char bottom_mid_down = lvl[(int)(offset_y + Pheight) / cell_size][(int)(player_x -x+ Pwidth / 2) / cell_size];
 
+	bool touching_flat = (bottom_left_down == '#' || bottom_right_down == '#' || bottom_mid_down == '#');
+    // 2. Check for SLOPED Platform collision (L or R)
+    bool touching_L = (bottom_left_down == 'L' || bottom_right_down == 'L' || bottom_mid_down == 'L');
+    bool touching_R = (bottom_left_down == 'R' || bottom_right_down == 'R' || bottom_mid_down == 'R');
+
     if (velocityY >= 0)//if going down check for collision and above platform
     {
         // Calculate the grid row where the feet are currently(taken from above)
         int feet_row = (int)(offset_y + Pheight) / cell_size;
         
-        if (bottom_left_down == '#' || bottom_right_down == '#' || bottom_mid_down == '#' ||
-			bottom_left_down == 'L' || bottom_right_down == 'L' || bottom_mid_down == 'L' ||
-			bottom_left_down == 'R' || bottom_right_down == 'R' || bottom_mid_down == 'R')//if below is platform
-        {
+        
             float platform_top = feet_row * cell_size;//same as feet_row because feet is on platform
             float old_feet_y = player_y + Pheight;
 
             if (old_feet_y <= platform_top + 5) //if sprite was above the platform ( the lower we go the y coordinate increases) 
             {
-                player_y = platform_top - Pheight;//teleports to top of platform to avoid sticking in middle  {player_y is the top left corner of sprite hitbox so subtract
-				// P_height to appear at top, in y axis subtract means to go up}
-				
-                velocityY = 0;
-                onGround = true;
-                return; // Exit function so it doesnot go down
+				if(touching_flat){
+					player_y = platform_top - Pheight;//teleports to top of platform to avoid sticking in middle  {player_y is the top left corner of sprite hitbox so subtract
+					// P_height to appear at top, in y axis subtract means to go up}
+					
+					velocityY = 0;
+					onGround = true;
+					return; // Exit function so it doesnot go down
+				}
+				else if (touching_L || touching_R) 
+            {
+					float slide_speed = 5.0f;
+
+					
+					if (touching_R) {
+						player_x += slide_speed;
+						onGround = true;
+					}
+					
+					else if (touching_L) {
+						player_x -= slide_speed; 
+						onGround = true;
+					}
+
+					return;
             }
-        }
+            }
+        
     }
 	
 	//if going up ignore collision
@@ -1274,7 +1295,8 @@ int main()
 			PlayerSprite.setScale(-3,3);
 
 			moveright(player_x,speed,PlayerSprite,frame,timer,Greenplayer);
-			
+			cout<<player_x<<endl;
+			cout<<player_y<<endl;
 		}
 		else if (Keyboard::isKeyPressed(Keyboard::Left) && !isdead){
 			if (isfacingleft == false){
@@ -1283,6 +1305,8 @@ int main()
 			}
 			PlayerSprite.setPosition(player_x, player_y);
 			moveleft(player_x,speed,PlayerSprite,frame,timer,Greenplayer);
+			cout<<player_x<<endl;
+			cout<<player_y<<endl;	
 		}
 		
 	
