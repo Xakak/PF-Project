@@ -931,8 +931,26 @@ bool enemy_gravity(char** lvl, float& x, float& y, int width, int height, int ce
 		return true;
     }
 }
+
+void spawnpower (float x, float y,bool isactive[], int powerupx[], int powerupy[]){
+	if (rand()%100 < 100){//10% chance to spawn powerup
+		for (int i = 0; i < 4; i++){
+			if (!isactive[i]){
+				powerupx[i] = x ;
+				powerupy[i] = y;
+				isactive[i] = true;
+				cout<<"Works\n";
+				break;
+			}
+		}
+		
+	}
+}
+
+
+
 void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8],int ghost_speed[8],float skeleton_x[4],float skeleton_y[4],int skeleton_speed[4],float player_x,float player_y,int &lives,const int cell_size,int pwidth,int pheight,float &speed, Sprite ghostsprite[],bool isghostfacingleft[],int ghost_state[],int ghost_timer[],Sprite skeletonSprite[],bool isskeletonfacngleft[],int skeleton_state[],int skeleton_timer[], float& vac_x,float& vac_y,int& vacwidth,int& vacheight,bool isghostalive[],bool isskeletonalive[],int& captured,Texture& ghosttex,Texture& skeletonTex,Sprite bulletsprite[],int bullettype[],int bulletx[],int bullety[],bool bulletactive[],int speedx[],int speedy[],int maxbullets,int& shoottimer,int& gspawntimer,int&sspawntimer,int& skeleton_spawned,int&ghost_spawned,
-               float chelnov_x[4], float chelnov_y[4], int chelnov_speed[4], Sprite chelnovSprite[], bool ischelnovfacingleft[], int chelnov_state[], int chelnov_timer[], bool ischelnovalive[], int& chelnov_spawned, int& cspawntimer, Texture& chelnovtex,int& invis_spawned,int invis_timer[],float invis_x[],float invis_y[],float invis_speed[],bool isvisible[],Sprite invisprite[],bool isinvisfacingleft[],bool isinvisalive[],int& invis_spawntimer,Texture& invisTex){
+               float chelnov_x[4], float chelnov_y[4], int chelnov_speed[4], Sprite chelnovSprite[], bool ischelnovfacingleft[], int chelnov_state[], int chelnov_timer[], bool ischelnovalive[], int& chelnov_spawned, int& cspawntimer, Texture& chelnovtex,int& invis_spawned,int invis_timer[],float invis_x[],float invis_y[],float invis_speed[],bool isvisible[],Sprite invisprite[],bool isinvisfacingleft[],bool isinvisalive[],int& invis_spawntimer,Texture& invisTex,bool ispoweractive[], int powerupx[], int powerupy[], Sprite powerupsprite[]){
 	gspawntimer++;
 	if (gspawntimer > 240){//240 will spawn a ghost every 4 seconds
 		if (ghost_spawned< 4){
@@ -1134,8 +1152,35 @@ void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 	
 
 	
-	
-
+	//collision with power ups
+	if (ispoweractive[0]){
+		if (checkcollision(player_x,player_y,pwidth,pheight,powerupx[0],powerupy[0],50,50,speed,0)){
+			lives++;
+			ispoweractive[0] = false;
+			cout<<"Powerup collected"<<endl;
+		}
+	}
+	else if (ispoweractive[1]){
+		if (checkcollision(player_x,player_y,pwidth,pheight,powerupx[1],powerupy[1],50,50,speed,0)){
+			speed += 4;
+			ispoweractive[1] = false;
+			cout<<"Powerup collected"<<endl;
+		}
+	}
+	else if (ispoweractive[2]){
+		if (checkcollision(player_x,player_y,pwidth,pheight,powerupx[2],powerupy[2],50,50,speed,0)){
+			vacheight += 20;
+			ispoweractive[2] = false;
+			cout<<"Powerup collected"<<endl;
+		}
+	}
+	else if (ispoweractive[3]){
+		if (checkcollision(player_x,player_y,pwidth,pheight,powerupx[3],powerupy[3],50,50,speed,0)){
+			vacwidth += 20;
+			ispoweractive[3] = false;
+			cout<<"Powerup collected"<<endl;
+		}
+	}
 	for (int b = 0; b < maxbullets; b++){
 		if (bulletactive[b]) {
 		
@@ -1144,19 +1189,20 @@ void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 		if (isghostalive[g]) {
 				int bw = 96; int bh = 96;
 				int gw = 120; int gh = 120;
-				float bx = (float)bulletx[b];
-				float by = (float)bullety[b];
+				float bx = bulletx[b];
+				float by = bullety[b];
 				float gx = ghost_x[g];
 				float gy = ghost_y[g];
 				
 				if (!(bx + bw < gx || bx > gx + gw || by + bh < gy || by > gy + gh)){
 					isghostalive[g] = false;
 					bulletactive[b] = false;
+					spawnpower(gx,gy,ispoweractive,powerupx,powerupy);
 					break;
 				}
 			}
 		}
-		cout<<lives<<endl;
+	
 		if (bulletactive[b]) {
 
 		// skeletons
@@ -1165,17 +1211,8 @@ void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 			if (checkcollision(bulletx[b], bullety[b], 96, 96, skeleton_x[s], skeleton_y[s], 60, 175, speedx[b], skeleton_speed[s])){
 				isskeletonalive[s] = false;
 				bulletactive[b] = false;
-				break;
-			}
-		}
-		}
-	}
-	if (bulletactive[b]) {
-    for (int c = 0; c < 4; c++) {
-            if (ischelnovalive[c]) {
-                if (checkcollision(bulletx[b], bullety[b], 96, 96, chelnov_x[c], chelnov_y[c], 60, 80, speedx[b], chelnov_speed[c])) {
-                        ischelnovalive[c] = false;
-				bulletactive[b] = false;
+				spawnpower(skeleton_x[s],skeleton_y[s],ispoweractive,powerupx,powerupy);
+				
 				break;
 			}
 		}
@@ -1185,13 +1222,23 @@ void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 			if (isinvisalive[i]){
 				if (checkcollision(bulletx[b], bullety[b], 96, 96, invis_x[i], invis_y[i], 96, 120, speedx[b], invis_speed[i])){
 					isinvisalive[i] = false;
-	                        bulletactive[b] = false;
-	                        break;
-	                    }
-	                }
-            }
-        }
+					bulletactive[b] = false;
+					spawnpower(invis_x[i],invis_y[i],ispoweractive,powerupx,powerupy);
+					
+					break;
+				}
+			}
+		}
 	}
+	}
+
+	}
+	
+	for (int i = 0; i < 4; i++){
+		if(ispoweractive[i]){
+			powerupsprite[i].setPosition(powerupx[i],powerupy[i]);
+		}
+
 	}
 
 
@@ -1339,6 +1386,7 @@ void level_one(char **lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 	}
 	}
 	}
+
 
 }
 
@@ -1543,7 +1591,15 @@ int main()
 	Texture selecttex;
 	Texture invistex;
 	Sprite invisprite[3];
+	Sprite powerup[4];
+	Texture poweruptex;
 
+	poweruptex.loadFromFile("Assets/tumblepoppers.png");
+	for (int i = 0; i < 4; i++){
+		powerup[i].setTexture(poweruptex);
+		powerup[i].setScale(3,3);
+
+	}
 	invistex.loadFromFile("Assets/invisible_man.png");
 	for (int i = 0; i < 3; i++){
 		invisprite[i].setTexture(invistex);
@@ -1702,7 +1758,17 @@ int main()
 	PlayerSprite.setPosition(player_x, player_y);
 	PlayerSprite.setTextureRect(IntRect(12,36,32,45));
 
+	powerup[0].setTextureRect(IntRect(21,389,20,21));//speed up
 	
+	powerup[1].setTextureRect(IntRect(489,385,25,25));//extra life
+	
+	powerup[2].setTextureRect(IntRect(270,392,28,20));//vacuum range
+	
+	powerup[3].setTextureRect(IntRect(124,388,20,22));//vacuum power
+	
+	bool ispoweractive[4]={false,false,false,false};
+	int powerupx[4]={0,0,0,0};
+	int powerupy[4]={0,0,0,0};
 	for (int i = 0; i< 8; i++){
 		ghostsprite[i].setScale(3,3);
 	}
@@ -1996,9 +2062,8 @@ int main()
 			shoot(bullets, captured, player_x, player_y, speed, bulletx, bullety, bulletactive, speedx, speedy, shoottimer,bursttex);
 
 		updatebullets(lvl, width, height, cell_size, bulletx, bullety, bulletactive, speedx, speedy, bullets, bullettype, maxbullets, gravity);
-	level_two(lvl,width,height,ghost_x,ghost_y,ghost_speed,skeleton_x,skeleton_y,skeleton_speed,player_x,player_y,lives,cell_size,PlayerWidth,PlayerHeight,speed,ghostsprite,isghostfacingleft,ghost_state,ghost_timer,skeletonSprite,isskeletonfacingleft,skeleton_state,skeleton_timer,vac_x,vac_y,vacwidth,vacheight,isghostalive,isskeletonalive,captured,ghosttex,skeletonTex,bullets,bullettype,bulletx,bullety,bulletactive,speedx,speedy,maxbullets,shoottimer,gspawntimer,sspawntimer,ghost_spawned,skeleton_spawned,chelnov_x,chelnov_y,chelnov_speed,chelnovSprite,ischelnovfacingleft,chelnov_state,chelnov_timer,ischelnovalive,chelnov_spawned,cspawntimer,chelnovtex,invis_spawned,invis_timer,invis_x,invis_y,invis_speed,isvisible,invisprite,isinvisfacingleft,isinvisalive,invisspawntimer,invistex);
+	level_two(lvl,width,height,ghost_x,ghost_y,ghost_speed,skeleton_x,skeleton_y,skeleton_speed,player_x,player_y,lives,cell_size,PlayerWidth,PlayerHeight,speed,ghostsprite,isghostfacingleft,ghost_state,ghost_timer,skeletonSprite,isskeletonfacingleft,skeleton_state,skeleton_timer,vac_x,vac_y,vacwidth,vacheight,isghostalive,isskeletonalive,captured,ghosttex,skeletonTex,bullets,bullettype,bulletx,bullety,bulletactive,speedx,speedy,maxbullets,shoottimer,gspawntimer,sspawntimer,ghost_spawned,skeleton_spawned,chelnov_x,chelnov_y,chelnov_speed,chelnovSprite,ischelnovfacingleft,chelnov_state,chelnov_timer,ischelnovalive,chelnov_spawned,cspawntimer,chelnovtex,invis_spawned,invis_timer,invis_x,invis_y,invis_speed,isvisible,invisprite,isinvisfacingleft,isinvisalive,invisspawntimer,invistex,ispoweractive,powerupx,powerupy,powerup);
 
-		updatebullets(lvl, width, height, cell_size, bulletx, bullety, bulletactive, speedx, speedy, bullets, bullettype, maxbullets, (int)gravity);
 	for (int i =0 ; i < 4; i++){
 		if(isghostalive[i]){
 			window.draw(ghostsprite[i]);
@@ -2023,6 +2088,12 @@ int main()
 				window.draw(bullets[b]);
 			}
 		}
+for (int i = 0 ; i < 4; i++){
+	if(ispoweractive[i]){
+		window.draw(powerup[i]);
+		powerup[i].setPosition(powerupx[i],powerupy[i]);
+	}
+	}
 	for (int i = 0; i < 4 ; i++){
 		if (ischelnovalive[i]){
 			enemy_gravity(lvl, chelnov_x[i], chelnov_y[i], 120, 135, cell_size);
