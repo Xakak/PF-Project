@@ -500,7 +500,6 @@ void chelnovs(char** lvl, float chelnov_x[], float chelnov_y[], int chelnov_spee
     for (int i = 0; i < n; i++) {
         chelnov_timer[i]--;
 
-        // 1. DECISION LOGIC
         if (chelnov_timer[i] <= 0) {
             
             // 30% Chance to try changing platforms if currently moving
@@ -509,76 +508,72 @@ void chelnovs(char** lvl, float chelnov_x[], float chelnov_y[], int chelnov_spee
                 int current_col = (int)(chelnov_x[i] + c_width / 2) / cell_size;
                 int current_row = (int)(chelnov_y[i] + c_height) / cell_size;
                 
-                // Decide: Try to go UP (0) or DOWN (1) randomly
                 int direction = rand() % 2; 
                 bool moved = false;
 
-                // --- TRY GOING UP ---
                 if (direction == 0) {
                     // Scan 5 blocks upward
-                    for (int r = current_row - 2; r > current_row - 7; r--) {
-                        if (r < 0) break; // Don't look off screen
-                        
-                        // If we find a block '#'
-                        if (lvl[r][current_col] == '#') {
-                                chelnov_y[i] = (r - 1) * cell_size; // Teleport to top of that block
-                                moved = true;
-                                break;
-                            
-                        }
-                    }
-                }
-                
-                // --- TRY GOING DOWN ---
-                else {
-                    // Scan 5 blocks downward
-                    for (int r = current_row + 1; r < height_limit; r++) {
-                        // If we find a block '#'
-                        if (lvl[r][current_col] == '#') {
-                            // Teleport to top of that block
-                            chelnov_y[i] = (r-1) * cell_size; // -1 to stand ON it, not IN it
-                            moved = true;
-                            break;
-                        }
-                    }
-                }
+				for (int r = current_row - 2; r > current_row - 7; r--) {
+					if (r < 0) break; // Don't look off screen
+					
+					// If we find a block '#'
+					if (lvl[r][current_col] == '#') {
+							chelnov_y[i] = (r - 1) * cell_size; // Teleport to top of that block
+						moved = true;
+						break;
+					
+					}
+				}
+			}
+			
+			else {
+				// Scan 5 blocks downward
+				for (int r = current_row + 1; r < height_limit; r++) {
+					// If we find a block '#'
+					if (lvl[r][current_col] == '#') {
+						// Teleport to top of that block
+						chelnov_y[i] = (r-1) * cell_size; // -1 to stand ON it, not IN it
+						moved = true;
+						break;
+					}
+				}
+			}
 
-                // If we didn't move (no platform found), just turn around instead
+                // If we didn't move  just turn around instead
                 if (!moved) {
                      chelnov_speed[i] *= -1;
-                }
-            }
-            else {
-                // Toggle Moving/Idle state (Same as before)
-                if (chelnov_state[i] == 1) {
-                    chelnov_state[i] = 0; 
-                    chelnov_timer[i] = rand() % 60 + 30; 
-                }
-                else {
-                    chelnov_state[i] = 1; 
-                    chelnov_timer[i] = rand() % 180 + 300; 
-                }
-            }
-        }
+			}
+		}
+		else {
+			// Toggle Moving/Idle state 
+			if (chelnov_state[i] == 1) {
+				chelnov_state[i] = 0; 
+				chelnov_timer[i] = rand() % 60 + 30; 
+			}
+			else {
+				chelnov_state[i] = 1; 
+				chelnov_timer[i] = rand() % 180 + 300; 
+			}
+		}
+	}
 
-        // 2. MOVEMENT LOGIC (Same as before)
         if (chelnov_state[i] == 1) {
             // Screen edge bounce
             if (chelnov_x[i] >= 1130) chelnov_speed[i] *= -1;
             if (chelnov_x[i] <= 0) chelnov_speed[i] *= -1;
 
-            // Flip sprite
+            // flip sprite
             if (chelnov_speed[i] < 0) {
-                if (!isfacingleft[i]) {
-                    chelnov_x[i] -= 96; 
-                    isfacingleft[i] = true;
-                }
-                chelnovSprite[i].setScale(3, 3);
-            }
-            if (chelnov_speed[i] > 0) {
-                if (isfacingleft[i] == true) {
-                    chelnov_x[i] += 96;
-                    isfacingleft[i] = false;
+			if (!isfacingleft[i]) {
+				chelnov_x[i] -= 96; 
+				isfacingleft[i] = true;
+			}
+			chelnovSprite[i].setScale(3, 3);
+		}
+		if (chelnov_speed[i] > 0) {
+			if (isfacingleft[i] == true) {
+				chelnov_x[i] += 96;
+				isfacingleft[i] = false;
                 }
                 chelnovSprite[i].setScale(-3, 3);
             }
@@ -730,7 +725,7 @@ void shoot(Sprite bulletsprite[],int& captured,int player_x,int player_y, float 
 	
 	if (shoottimer > 0) {
 		shoottimer--;
-		return; // Can't shoot yet
+		return; // cant shoot yet
 	}
 	if (Keyboard::isKeyPressed(Keyboard::B) && captured > 0) {
 	
@@ -825,27 +820,27 @@ void updatebullets(char** lvl,int levelWidth,int levelHeight,int cell_size,int b
 			int midCol = (bulletx[i] + bw/2) / cell_size;//midcol
 			if (bottomrow >= 0 && bottomrow < levelHeight && midCol >= 0 && midCol < levelWidth){
 				if (lvl[bottomrow][midCol] == '#' || lvl[bottomrow][midCol] == 'L' || lvl[bottomrow][midCol] == 'R'){
-					//adjust bullet y to be on top of platform
-					bullety[i] = bottomrow * cell_size - bh;
-					speedy[i] = 0;
+				//adjust bullet y to be on top of platform
+				bullety[i] = bottomrow * cell_size - bh;
+				speedy[i] = 0;
 					if (speedx[i] == 0) speedx[i] = (rand() % 2 == 0) ? -3 : 3;//choose random direction
-				} else {
-					if (speedy[i] == 0){
-						int belowRow = (bullety[i] + bh + 1) / cell_size;
-						if (belowRow >= levelHeight || (lvl[belowRow][midCol] != '#' && lvl[belowRow][midCol] != 'L' && lvl[belowRow][midCol] != 'R'	)){
-							speedy[i] = gravity; // start falling
-						}
-					} 
-					else {
+			} else {
+				if (speedy[i] == 0){
+					int belowRow = (bullety[i] + bh + 1) / cell_size;
+					if (belowRow >= levelHeight || (lvl[belowRow][midCol] != '#' && lvl[belowRow][midCol] != 'L' && lvl[belowRow][midCol] != 'R'	)){
+						speedy[i] = gravity; // start falling
+					}
+				} 
+				else {
 						speedy[i] += gravity;
 						if (speedy[i] > 10) speedy[i] = 10;
-				}
 			}
 		}
 		}
+		}
 
 
-		// sliding off platform -> start falling
+		// make it fall
 		if (speedy[i] == 0 && speedx[i] != 0){
 			int belowRow = (bullety[i] + (int)bh + 1) / cell_size;
 			int midCol = (bulletx[i] + (int)(bw/2)) / cell_size;
@@ -932,8 +927,114 @@ bool enemy_gravity(char** lvl, float& x, float& y, int width, int height, int ce
     }
 }
 
+void resize_arrays(float*& x, float*& y, float*& spd, int*& type, int*& state, int*& timer,bool*& face, bool*& alive, bool*& vis, Sprite*& spr, int& capacity,bool*& issucked) {
+    
+    int new_cap = capacity + 2;
+
+    // make new arrays
+    float* new_x = new float[new_cap];
+    float* new_y = new float[new_cap];
+    float* new_spd = new float[new_cap];
+    int* new_type = new int[new_cap];
+    int* new_state = new int[new_cap];
+    int* new_timer = new int[new_cap];
+    bool* new_face = new bool[new_cap];
+    bool* new_alive = new bool[new_cap];
+    bool* new_vis = new bool[new_cap];
+    Sprite* new_spr = new Sprite[new_cap];
+	bool* new_issucked = new bool[new_cap];
+
+    //copy old data
+    for (int i = 0; i < capacity; i++) {
+        new_x[i] = x[i];
+        new_y[i] = y[i];
+        new_spd[i] = spd[i];
+        new_type[i] = type[i];
+        new_state[i] = state[i];
+        new_timer[i] = timer[i];
+        new_face[i] = face[i];
+        new_alive[i] = alive[i];
+        new_vis[i] = vis[i];
+        new_spr[i] = spr[i];
+		new_issucked[i] = issucked[i];
+    }
+
+    //Delete old arrays
+    delete[] x;
+	delete[] y;
+	delete[] spd;
+	delete[] type; 
+	delete[] state;
+    delete[] timer; 
+	delete[] face; 
+	delete[] alive; 
+	delete[] vis; 
+	delete[] spr;
+	delete[] new_issucked;
+
+
+    // Update 
+    x = new_x; 
+	y = new_y; 
+	spd = new_spd;
+	type = new_type;
+	state = new_state;
+    timer = new_timer; 
+	face = new_face; 
+	alive = new_alive; 
+	vis = new_vis; 
+	spr = new_spr;
+    issucked = new_issucked;
+
+    capacity = new_cap;
+}
+void spawn_dynamic(int& count, int& capacity, float spawn_x, float spawn_y,float*& x, float*& y, float*& spd, int*& type, int*& state, int*& timer, bool*& face, bool*& alive, bool*& vis, Sprite*& spr,Texture& ghostT, Texture& skelT, Texture& invisT, Texture& chelT,bool*& issucked) {
+
+    // Resize if full
+    if (count >= capacity) {
+        resize_arrays(x, y, spd, type, state, timer, face, alive, vis, spr, capacity,issucked);
+    }
+
+    // Initialize Index
+    int i = count;
+    x[i] = spawn_x;
+    y[i] = spawn_y;
+    alive[i] = true;
+    vis[i] = true; // Default visible
+    face[i] = (rand() % 2);
+    state[i] = 1; // Moving
+    timer[i] = rand() % 120;
+    
+    // Random Type (0-3)
+    type[i] = rand() % 4; 
+
+    if (type[i] == 0) { // Ghost
+        spr[i].setTexture(ghostT);
+        spr[i].setTextureRect(IntRect(0,0,40,40));
+        spd[i] = 2;
+    } 
+    else if (type[i] == 1) { // Skeleton
+        spr[i].setTexture(skelT);
+        spr[i].setTextureRect(IntRect(0,0,40,75));
+        spd[i] = 3;
+    }
+    else if (type[i] == 2) { // Invisible Man
+        spr[i].setTexture(invisT);
+        spr[i].setTextureRect(IntRect(8,16,32,45));
+        spd[i] = 3;
+    }
+    else if (type[i] == 3) { // Chelnov
+        spr[i].setTexture(chelT);
+        spr[i].setTextureRect(IntRect(0,0,32,45)); 
+        spd[i] = 4;
+    }
+
+    spr[i].setScale(3,3);
+    count++;
+}
+
 void spawnpower (float x, float y,bool isactive[], int powerupx[], int powerupy[]){
-	if (rand()%100 < 100){//10% chance to spawn powerup
+	if (rand()%100 < 10){//10% chance to spawn powerup
 		for (int i = 0; i < 4; i++){
 			if (!isactive[i]){
 				powerupx[i] = x ;
@@ -949,8 +1050,8 @@ void spawnpower (float x, float y,bool isactive[], int powerupx[], int powerupy[
 
 
 
-void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8],int ghost_speed[8],float skeleton_x[4],float skeleton_y[4],int skeleton_speed[4],float player_x,float player_y,int &lives,const int cell_size,int pwidth,int pheight,float &speed, Sprite ghostsprite[],bool isghostfacingleft[],int ghost_state[],int ghost_timer[],Sprite skeletonSprite[],bool isskeletonfacngleft[],int skeleton_state[],int skeleton_timer[], float& vac_x,float& vac_y,int& vacwidth,int& vacheight,bool isghostalive[],bool isskeletonalive[],int& captured,Texture& ghosttex,Texture& skeletonTex,Sprite bulletsprite[],int bullettype[],int bulletx[],int bullety[],bool bulletactive[],int speedx[],int speedy[],int maxbullets,int& shoottimer,int& gspawntimer,int&sspawntimer,int& skeleton_spawned,int&ghost_spawned,
-               float chelnov_x[4], float chelnov_y[4], int chelnov_speed[4], Sprite chelnovSprite[], bool ischelnovfacingleft[], int chelnov_state[], int chelnov_timer[], bool ischelnovalive[], int& chelnov_spawned, int& cspawntimer, Texture& chelnovtex,int& invis_spawned,int invis_timer[],float invis_x[],float invis_y[],float invis_speed[],bool isvisible[],Sprite invisprite[],bool isinvisfacingleft[],bool isinvisalive[],int& invis_spawntimer,Texture& invisTex,bool ispoweractive[], int powerupx[], int powerupy[], Sprite powerupsprite[]){
+
+void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8],int ghost_speed[8],float skeleton_x[4],float skeleton_y[4],int skeleton_speed[4],float player_x,float player_y,int &lives,const int cell_size,int pwidth,int pheight,float &speed, Sprite ghostsprite[],bool isghostfacingleft[],int ghost_state[],int ghost_timer[],Sprite skeletonSprite[],bool isskeletonfacngleft[],int skeleton_state[],int skeleton_timer[], float& vac_x,float& vac_y,int& vacwidth,int& vacheight,bool isghostalive[],bool isskeletonalive[],int& captured,Texture& ghosttex,Texture& skeletonTex,Sprite bulletsprite[],int bullettype[],int bulletx[],int bullety[],bool bulletactive[],int speedx[],int speedy[],int maxbullets,int& shoottimer,int& gspawntimer,int&sspawntimer,int& skeleton_spawned,int&ghost_spawned,float chelnov_x[4], float chelnov_y[4], int chelnov_speed[4], Sprite chelnovSprite[], bool ischelnovfacingleft[], int chelnov_state[], int chelnov_timer[], bool ischelnovalive[], int& chelnov_spawned, int& cspawntimer, Texture& chelnovtex,int& invis_spawned,int invis_timer[],float invis_x[],float invis_y[],float invis_speed[],bool isvisible[],Sprite invisprite[],bool isinvisfacingleft[],bool isinvisalive[],int& invis_spawntimer,Texture& invisTex,bool ispoweractive[], int powerupx[], int powerupy[], Sprite powerupsprite[]){
 	gspawntimer++;
 	if (gspawntimer > 240){//240 will spawn a ghost every 4 seconds
 		if (ghost_spawned< 4){
@@ -1549,6 +1650,40 @@ void initialize_level3(char** lvl,int width,int height){
 	
 }
 
+void initialize_level4(char** lvl,int width,int height){
+	//clear map
+	for(int i=0;i<height;i++){
+		for(int j=0;j<width;j++)
+			lvl[i][j] = '\0';
+	}
+	for (int i = 0; i < width; i++) {
+        lvl[height - 1][i] = '#'; 
+    }
+
+	//left platforms
+	for(int i=0;i<6;i++){
+		lvl[5][i] = '#';
+	}
+	for(int i=0;i<5;i++){
+		lvl[9][i] = '#';
+	}
+	for(int i=0;i<9;i++){
+		lvl[15][i] = '#';
+	}
+
+	//right platforms
+	for(int i=width-1;i>width-6;i--){
+		lvl[5][i] = '#';
+	}
+	for(int i=width-1;i>width-11;i--){
+		lvl[9][i] = '#';
+	}
+	for(int i=width-1;i>width-8;i--){
+		lvl[15][i] = '#';
+	}
+
+}
+
 
 
 int main()
@@ -1560,9 +1695,9 @@ int main()
 	window.setFramerateLimit(60);
 
 	//level specifics
-	const int cell_size = 64;
-	const int height = 14;
-	const int width = 18;
+	int cell_size = 64;
+	int height = 14;
+	int width = 18;
 	char** lvl;
 
 	//level and background textures and sprites
@@ -1593,6 +1728,36 @@ int main()
 	Sprite invisprite[3];
 	Sprite powerup[4];
 	Texture poweruptex;
+	Texture octotex;
+	Sprite octosprite;
+	Texture minitex;
+	Sprite minisprite;
+	Texture cloudtex;
+	Sprite cloudsprite;
+	Texture pottex;
+	Sprite potsprite;
+	
+	int octo_x = 500;
+	int octo_y = 1000;
+	
+	octotex.loadFromFile("Assets/Octopus.png");
+	minitex.loadFromFile("Assets/min1.png");
+	octosprite.setTexture(octotex);
+	octosprite.setScale(7,7);
+	minisprite.setTexture(minitex);
+	minisprite.setScale(3,3);
+	octosprite.setPosition(octo_x,octo_y);
+	
+
+	pottex.loadFromFile("Assets/pot.png");
+	potsprite.setTexture(pottex);
+	cloudtex.loadFromFile("Assets/cloud.png");
+	cloudsprite.setTexture(cloudtex);
+	cloudsprite.setTextureRect(IntRect(15,90,320,180));
+	cloudsprite.setPosition(400,500);
+	cloudsprite.setScale(1,1);
+	int cloudy = cell_size*3;
+	float cloudspeed = 1;
 
 	poweruptex.loadFromFile("Assets/tumblepoppers.png");
 	for (int i = 0; i < 4; i++){
@@ -1851,9 +2016,32 @@ int main()
 	
 	
 	//levels
-	int current_level=2;
+	int current_level=0;
 	int level2Loaded = false;
 	int level3Loaded = false;
+	int level4Loaded = false;
+		// --- DYNAMIC ARRAYS (Pointers) ---
+	int dy_capacity = 5;  // Initial size
+	int dy_count = 0;     // Current number of enemies
+
+	// Allocate memory for each property
+	float* dy_x = new float[dy_capacity];
+	float* dy_y = new float[dy_capacity];
+	float* dy_speed = new float[dy_capacity];
+	int* dy_type = new int[dy_capacity]; // 0=Ghost, 1=Skel, 2=Invis, 3=Chelnov
+	int* dy_state = new int[dy_capacity]; 
+	int* dy_timer = new int[dy_capacity];
+	bool* dy_facingLeft = new bool[dy_capacity];
+	bool* dy_alive = new bool[dy_capacity];
+	bool* dy_visible = new bool[dy_capacity]; // For invisible man
+	Sprite* dy_sprite = new Sprite[dy_capacity]; //Sprite array
+	bool* dy_is_sucked = new bool[dy_capacity];
+
+	// Pot (level 3) state
+	int potHealth = 5;
+	bool potDestroyed = false;
+	int potSpawnTimer = 0;
+	int potSpawnInterval = 120; // frames between spawns 
 
 	Event ev;
 	//main loop
@@ -2109,13 +2297,232 @@ for (int i = 0 ; i < 4; i++){
 	if(!level3Loaded){
 		initialize_level3(lvl,width,height);
 		level3Loaded = true;
+		//reset variables from level 2
+		lives = 1;
+
 	}
+	cloudy += cloudspeed;
+	if (cloudy >= cell_size*8)
+		cloudspeed = -cloudspeed;
+	if (cloudy <= cell_size*3)
+		cloudspeed = -cloudspeed;	
+	cloudy += cloudspeed;
+	cloudsprite.setPosition(400,cloudy);
+	potsprite.setPosition(500,cloudy );
+	
+	window.draw(cloudsprite);
+	window.draw(potsprite);
 
+	float pot_w = 40; // Assuming pot size
+    float pot_h = 40;
 
+    if (!potDestroyed) {
+        // bullets hitting the pot
+        for (int b = 0; b < maxbullets; b++) {
+            if (bulletactive[b]) {
+                float bx = bulletx[b];
+                float by = bullety[b];
+                float bw = 96;
+                float bh = 96;
+
+                
+                if (checkcollision(bx, by, bw, bh, 500, cloudy, pot_w, pot_h, 0, 0)) {
+
+                    // Hit the pot
+                    potHealth--;
+                    bulletactive[b] = false;
+                    // Move bullet away
+                    bulletx[b] = -1000; 
+                    bullety[b] = -1000;
+                    
+                    if (potHealth <= 0) {
+                        potDestroyed = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Spawning Timer
+        potSpawnTimer++;
+        if (potSpawnTimer >= 180) {
+            
+            float spawn_center_x = 500 + 20;
+            float sx = spawn_center_x + (rand() % 41 - 20);
+            float sy = cloudy - 10.0f; // Slightly above pot
+
+            spawn_dynamic(dy_count, dy_capacity, sx, sy,
+                    dy_x, dy_y, dy_speed, dy_type, dy_state, dy_timer,
+                    dy_facingLeft, dy_alive, dy_visible, dy_sprite,
+                    ghosttex, skeletonTex, invistex, chelnovtex,dy_is_sucked);
+            potSpawnTimer = 0;
+        }
+    }
+	for(int i = 0;i < dy_count; i++)
+	{
+		enemy_gravity(lvl, dy_x[i], dy_y[i], 96, 120, cell_size);
+	}
+	if (Keyboard :: isKeyPressed(Keyboard::Space)){
+		for (int i = 0; i< dy_count; i++){
+			//check collision between vacuum and skeleton
+		if (checkcollision(vac_x,vac_y,vacwidth,vacheight,dy_x[i],dy_y[i],60,175,speed,dy_speed[i])){
+				dy_is_sucked[i] = true;
+				bool isalive = dy_alive[i];
+				suck(speed,dy_x[i],dy_y[i],60,175,dy_speed[i],player_x,player_y,PlayerWidth,PlayerHeight,dy_sprite[i],dy_alive[i]);
+				if(dy_alive[i]){
+				
+				bullets[captured].setTexture(skeletonTex);
+				bullets[captured].setScale(3,3);
+				bullets[captured].setTextureRect(IntRect(1039,39,32,32));
+				}
+				if(!dy_alive[i] && isalive){
+					captured++;//only increment captured when the skeleton was alive before and is dead now
+				}
+				
+				
+			}
+		}
+	}
+	//player collision with enemy
+	
+	for(int i = 0;i < dy_count; i++){
+		float bx = bulletx[i];
+            float by = bullety[i];
+            float bw = 96;
+            float bh = 96;
+
+            // Determine enemy hitbox based on type
+            float ex = dy_x[i];
+            float ey = dy_y[i];
+            float ew = 0; 
+            float eh = 0;
+		  if (dy_type[i] == 0) { // Ghost
+                ew = 96;
+				 eh = 120; // Approx scaled size
+            } else if (dy_type[i] == 1) { // Skeleton
+                ew = 120; eh = 225;
+            } else { // Others
+                ew = 96; eh = 120; 
+            }
+
+		if(checkcollision(player_x,player_y,PlayerWidth,PlayerHeight,dy_x[i],dy_y[i],40,40,speed,dy_speed[i]) && dy_is_sucked[i]== false && dy_alive[i]== true){
+			// Handle player collision with enemy
+			cout<<"Works"<<endl;
+			lives--;
+		}
+	}
+	
+    // Update and draw dynamic enemies
+    for (int i = 0; i < dy_count; i++) {
+        if (!dy_alive[i]) continue;
+
+        if (dy_facingLeft[i]) dy_x[i] -= dy_speed[i];
+        else dy_x[i] += dy_speed[i];
+
+        // screen Bounds flip
+        if (dy_x[i] < 0) {
+             dy_x[i] = 0;
+             dy_facingLeft[i] = false;
+        }
+        else if (dy_x[i] > width * cell_size - 40) { // Assuming width is screen edge
+             dy_x[i] = width * cell_size - 40;
+             dy_facingLeft[i] = true;
+        }
+
+        // Sync Sprite Position
+        dy_sprite[i].setPosition(dy_x[i], dy_y[i]);
+        window.draw(dy_sprite[i]);
+
+        //collision between bullet and enemy
+        for (int b = 0; b < maxbullets; b++) {
+            if (!bulletactive[b]) continue;
+
+            float bx = (float)bulletx[b];
+            float by = (float)bullety[b];
+            float bw = 96.0f;
+            float bh = 96.0f;
+
+            // Determine enemy hitbox based on type 
+            float ex = dy_x[i];
+            float ey = dy_y[i];
+            float ew = 0; 
+            float eh = 0;
+
+            if (dy_type[i] == 0) { // Ghost
+                ew = 96.0f; eh = 120.0f; // Approx scaled size
+            } else if (dy_type[i] == 1) { // Skeleton
+                ew = 120.0f; eh = 225.0f;
+            } else { // Others
+                ew = 96.0f; eh = 120.0f; 
+            }
+
+            // collision check between bullet and enemy
+           	if (checkcollision(bx, by, bw, bh, ex, ey, ew, eh, 0, 0)) {
+                
+                dy_alive[i] = false; // Enemy killed
+                bulletactive[b] = false;
+                bulletx[b] = -1000;
+                bullety[b] = -1000;
+                break;
+            }
+        }
+    }
 
 
 
 }
+
+	if (current_level == 4) {
+
+		if (!level4Loaded) {
+		
+			for (int i = 0; i < height; i++) {
+				delete[] lvl[i];
+			}
+			delete[] lvl;
+
+			int old_cell_size = cell_size; // Save old size to calculate scale factor
+			
+			width = width * 1.5;   
+			height = height * 1.5; 
+			cell_size = cell_size / 1.5; 
+
+			//new array for level 4
+			lvl = new char* [height];
+			for (int i = 0; i < height; i += 1)
+			{
+				lvl[i] = new char[width];
+			}
+
+			initialize_level4(lvl, width, height);
+
+			
+			float scaleFactor = (float)cell_size / (float)old_cell_size;
+			
+			// Apply scale to block sprite so they don't overlap
+			blockSprite.setScale(scaleFactor, scaleFactor);
+
+			// Reset Player Position to a safe spot
+			player_x = 2 * cell_size;
+			player_y = 2 * cell_size;
+			level4Loaded = true;
+		}
+
+		
+		display_level(window, lvl, bgTex, bgSprite, blockTexture, blockSprite, blockLTexture, blockLSprite, blockRTexture, blockRSprite, height, width, cell_size);
+		
+		
+		
+		// Update Player Physics
+		PlayerSprite.setPosition(player_x, player_y);
+		
+		
+		player_gravity(lvl, offset_y, velocityY, onGround, gravity, terminal_Velocity, player_x, player_y, cell_size, PlayerHeight, PlayerWidth, isfacingleft);
+		
+		window.draw(PlayerSprite);
+		octosprite.setPosition(10 * cell_size, 15 * cell_size - 120);
+		window.draw(octosprite);
+	}	
 
 
 	int ghosts_left = 0;
@@ -2136,7 +2543,17 @@ for (int i = 0 ; i < 4; i++){
 		delete[] lvl[i];
 	}
 	delete[] lvl;
-
+	delete[] dy_x;
+    delete[] dy_y;
+    delete[] dy_speed;
+    delete[] dy_type;
+    delete[] dy_state;
+    delete[] dy_timer;
+    delete[] dy_facingLeft;
+    delete[] dy_alive;
+    delete[] dy_visible;
+    delete[] dy_sprite;
+	delete[] dy_is_sucked;
 	return 0;
 }
 
