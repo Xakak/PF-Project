@@ -491,6 +491,102 @@ bool onplatform(char **lvl,float width, float height,float posx, float posy, con
 
 }
 
+void chelnovs(char** lvl, float chelnov_x[], float chelnov_y[], int chelnov_speed[], int n, Sprite chelnovSprite[], bool isfacingleft[], int chelnov_state[], int chelnov_timer[], int cell_size, int height_limit) {
+    
+    
+    int c_width = 120; 
+    int c_height = 135; 
+
+    for (int i = 0; i < n; i++) {
+        chelnov_timer[i]--;
+
+        // 1. DECISION LOGIC
+        if (chelnov_timer[i] <= 0) {
+            
+            // 30% Chance to try changing platforms if currently moving
+            if ((rand() % 10) < 3 && chelnov_state[i] == 1) {
+                
+                int current_col = (int)(chelnov_x[i] + c_width / 2) / cell_size;
+                int current_row = (int)(chelnov_y[i] + c_height) / cell_size;
+                
+                // Decide: Try to go UP (0) or DOWN (1) randomly
+                int direction = rand() % 2; 
+                bool moved = false;
+
+                // --- TRY GOING UP ---
+                if (direction == 0) {
+                    // Scan 5 blocks upward
+                    for (int r = current_row - 2; r > current_row - 7; r--) {
+                        if (r < 0) break; // Don't look off screen
+                        
+                        // If we find a block '#'
+                        if (lvl[r][current_col] == '#') {
+                                chelnov_y[i] = (r - 1) * cell_size; // Teleport to top of that block
+                                moved = true;
+                                break;
+                            
+                        }
+                    }
+                }
+                
+                // --- TRY GOING DOWN ---
+                else {
+                    // Scan 5 blocks downward
+                    for (int r = current_row + 1; r < height_limit; r++) {
+                        // If we find a block '#'
+                        if (lvl[r][current_col] == '#') {
+                            // Teleport to top of that block
+                            chelnov_y[i] = (r-1) * cell_size; // -1 to stand ON it, not IN it
+                            moved = true;
+                            break;
+                        }
+                    }
+                }
+
+                // If we didn't move (no platform found), just turn around instead
+                if (!moved) {
+                     chelnov_speed[i] *= -1;
+                }
+            }
+            else {
+                // Toggle Moving/Idle state (Same as before)
+                if (chelnov_state[i] == 1) {
+                    chelnov_state[i] = 0; 
+                    chelnov_timer[i] = rand() % 60 + 30; 
+                }
+                else {
+                    chelnov_state[i] = 1; 
+                    chelnov_timer[i] = rand() % 180 + 300; 
+                }
+            }
+        }
+
+        // 2. MOVEMENT LOGIC (Same as before)
+        if (chelnov_state[i] == 1) {
+            // Screen edge bounce
+            if (chelnov_x[i] >= 1130) chelnov_speed[i] *= -1;
+            if (chelnov_x[i] <= 0) chelnov_speed[i] *= -1;
+
+            // Flip sprite
+            if (chelnov_speed[i] < 0) {
+                if (!isfacingleft[i]) {
+                    chelnov_x[i] -= 96; 
+                    isfacingleft[i] = true;
+                }
+                chelnovSprite[i].setScale(3, 3);
+            }
+            if (chelnov_speed[i] > 0) {
+                if (isfacingleft[i] == true) {
+                    chelnov_x[i] += 96;
+                    isfacingleft[i] = false;
+                }
+                chelnovSprite[i].setScale(-3, 3);
+            }
+            chelnov_x[i] += chelnov_speed[i];
+        }
+    }
+}
+
 
 //function to handle player death animation
 void playerdies(Sprite &playersprite,int& frame,int& timer){
@@ -812,6 +908,10 @@ bool enemy_gravity(char** lvl, float& x, float& y, int width, int height, int ce
     int left_x = (int)(x + 10) / cell_size;       // +10 to avoid edge clipping
     int right_x = (int)(x + width - 10) / cell_size;
 
+	//prevent segmentation fault
+	if (left_x < 0) left_x = 0;
+    if (right_x >= 18) right_x = 17; // Clamp to the last valid column
+    if (feet_y >= 14) feet_y = 13;   // Clamp to the last valid row
 
     // Check blocks below
     char block_left = lvl[feet_y][left_x];
@@ -831,7 +931,8 @@ bool enemy_gravity(char** lvl, float& x, float& y, int width, int height, int ce
 		return true;
     }
 }
-void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8],int ghost_speed[8],float skeleton_x[4],float skeleton_y[4],int skeleton_speed[4],float player_x,float player_y,int &lives,const int cell_size,int pwidth,int pheight,float &speed, Sprite ghostsprite[],bool isghostfacingleft[],int ghost_state[],int ghost_timer[],Sprite skeletonSprite[],bool isskeletonfacngleft[],int skeleton_state[],int skeleton_timer[], float& vac_x,float& vac_y,int& vacwidth,int& vacheight,bool isghostalive[],bool isskeletonalive[],int& captured,Texture& ghosttex,Texture& skeletonTex,Sprite bulletsprite[],int bullettype[],int bulletx[],int bullety[],bool bulletactive[],int speedx[],int speedy[],int maxbullets,int& shoottimer,int& gspawntimer,int&sspawntimer,int& skeleton_spawned,int&ghost_spawned,int& invis_spawned,int invis_timer[],float invis_x[],float invis_y[],float invis_speed[],bool isvisible[],Sprite invisprite[],bool isinvisfacingleft[],bool isinvisalive[],int& invis_spawntimer,Texture& invisTex){
+void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8],int ghost_speed[8],float skeleton_x[4],float skeleton_y[4],int skeleton_speed[4],float player_x,float player_y,int &lives,const int cell_size,int pwidth,int pheight,float &speed, Sprite ghostsprite[],bool isghostfacingleft[],int ghost_state[],int ghost_timer[],Sprite skeletonSprite[],bool isskeletonfacngleft[],int skeleton_state[],int skeleton_timer[], float& vac_x,float& vac_y,int& vacwidth,int& vacheight,bool isghostalive[],bool isskeletonalive[],int& captured,Texture& ghosttex,Texture& skeletonTex,Sprite bulletsprite[],int bullettype[],int bulletx[],int bullety[],bool bulletactive[],int speedx[],int speedy[],int maxbullets,int& shoottimer,int& gspawntimer,int&sspawntimer,int& skeleton_spawned,int&ghost_spawned,
+               float chelnov_x[4], float chelnov_y[4], int chelnov_speed[4], Sprite chelnovSprite[], bool ischelnovfacingleft[], int chelnov_state[], int chelnov_timer[], bool ischelnovalive[], int& chelnov_spawned, int& cspawntimer, Texture& chelnovtex,int& invis_spawned,int invis_timer[],float invis_x[],float invis_y[],float invis_speed[],bool isvisible[],Sprite invisprite[],bool isinvisfacingleft[],bool isinvisalive[],int& invis_spawntimer,Texture& invisTex){
 	gspawntimer++;
 	if (gspawntimer > 240){//240 will spawn a ghost every 4 seconds
 		if (ghost_spawned< 4){
@@ -849,6 +950,16 @@ void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 		}
 	}
 
+	cspawntimer++;
+    if (cspawntimer > 360) { // 360 will spawn a Chelnov every 6 seconds
+        if (chelnov_spawned < 4) {
+            ischelnovalive[chelnov_spawned] = true;
+            chelnov_spawned++;
+            cspawntimer = 0;
+        }
+    }
+
+
 	invis_spawntimer++;
 	if (invis_spawntimer > 300){
 		if (invis_spawned < 3){
@@ -861,6 +972,8 @@ void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 	
 	ghosts(ghost_x,ghost_speed,4,ghostsprite,isghostfacingleft,ghost_state,ghost_timer);
 	skeletons(skeleton_x,skeleton_y,skeleton_speed,9,skeletonSprite,isskeletonfacngleft,skeleton_state,skeleton_timer,cell_size);
+	chelnovs(lvl,chelnov_x,chelnov_y,chelnov_speed,4,chelnovSprite,ischelnovfacingleft,chelnov_state,chelnov_timer,cell_size, height);
+	
 	invisible_man(invis_x,invis_y,player_x,player_y,isvisible,3,invisprite,invis_speed,isinvisfacingleft,invis_timer);
 	for(int i = 0; i < 4; i++){
 		bool enemyonground = enemy_gravity(lvl, ghost_x[i], ghost_y[i], 96, 120, cell_size);
@@ -900,6 +1013,25 @@ void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 		lives--;
 		}//smaller dimensions
 	}
+
+	for (int i = 0; i < 4; i++){
+        if (ischelnovalive[i]) {
+            bool enemyonground = enemy_gravity(lvl, chelnov_x[i], chelnov_y[i], 120, 135, cell_size);
+            
+            if (enemyonground) {
+                // If about to fall off platform, turn around
+                if (onplatform(lvl, 120, 135, chelnov_x[i], chelnov_y[i], cell_size, chelnov_speed[i]) == false) {
+                    chelnov_speed[i] *= -1;
+                }
+            }
+		}
+		if(checkcollision(player_x, player_y, pwidth, pheight, chelnov_x[i], chelnov_y[i], 60, 75, speed, chelnov_speed[i]) && ischelnovalive[i]) {
+			lives=0;
+		}
+	}
+
+
+
 		if (Keyboard :: isKeyPressed(Keyboard::Space)){
 		for (int i = 0; i < 4; i++){
 			//check collision between vacuum and ghost
@@ -919,7 +1051,7 @@ void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 			}
 			
 		}
-	}
+		}
 	if (Keyboard :: isKeyPressed(Keyboard::Space)){
 		for (int i = 0; i< 9; i++){
 			//check collision between vacuum and skeleton
@@ -940,6 +1072,25 @@ void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 			}
 		}
 	}
+
+	if (Keyboard::isKeyPressed(Keyboard::Space)) {
+        for (int i = 0; i < 4; i++) {
+            if (checkcollision(vac_x, vac_y, vacwidth, vacheight, chelnov_x[i], chelnov_y[i], 96, 120, speed, chelnov_speed[i]) && captured < 3) {
+                bool isalive = ischelnovalive[i];
+                suck(speed, chelnov_x[i], chelnov_y[i], 96, 120, chelnov_speed[i], player_x, player_y, pwidth, pheight, chelnovSprite[i], ischelnovalive[i]);
+                
+                if (ischelnovalive[i]) { 
+                    bullettype[captured] = 2; //2 for chelnov
+                    bulletsprite[captured].setTexture(chelnovtex);
+                    bulletsprite[captured].setScale(3, 3);
+                    bulletsprite[captured].setTextureRect(IntRect(0, 130, 40, 45)); 
+                }
+                if (!ischelnovalive[i] && isalive) {
+                    captured++;
+                }
+            }
+        }
+    }
 		if (Keyboard :: isKeyPressed(Keyboard::Space)){
 		for (int i = 0; i< 3; i++){
 			//check collision between vacuum and invisible man
@@ -969,6 +1120,11 @@ void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 			skeletonSprite[i].setPosition(skeleton_x[i],skeleton_y[i]); 
 		}
 		
+	}
+	for (int i = 0; i < 4; i++){
+		if (ischelnovalive[i]){
+			chelnovSprite[i].setPosition(chelnov_x[i],chelnov_y[i]);
+		}
 	}
 	for (int i = 0; i < 3; i++){
 		if (isinvisalive[i]){
@@ -1013,17 +1169,28 @@ void level_two(char** lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 			}
 		}
 		}
+	}
+	if (bulletactive[b]) {
+    for (int c = 0; c < 4; c++) {
+            if (ischelnovalive[c]) {
+                if (checkcollision(bulletx[b], bullety[b], 96, 96, chelnov_x[c], chelnov_y[c], 60, 80, speedx[b], chelnov_speed[c])) {
+                        ischelnovalive[c] = false;
+				bulletactive[b] = false;
+				break;
+			}
+		}
+		}
 		//invisible man
 		for (int i = 0; i < 3;i++){
 			if (isinvisalive[i]){
 				if (checkcollision(bulletx[b], bullety[b], 96, 96, invis_x[i], invis_y[i], 96, 120, speedx[b], invis_speed[i])){
 					isinvisalive[i] = false;
-					bulletactive[b] = false;
-					break;
-				}
-			}
-		}
-	}
+	                        bulletactive[b] = false;
+	                        break;
+	                    }
+	                }
+            }
+        }
 	}
 	}
 
@@ -1175,11 +1342,21 @@ void level_one(char **lvl,int width,int height,float ghost_x[8],float ghost_y[8]
 
 }
 
-bool check_level_completion(bool isghostalive[],bool isskeletonalive[],int current_level){
-	int ghost_num,skeleton_num;
+bool check_level_completion(bool isghostalive[],bool isskeletonalive[],bool ischelnovalive[],bool isinvisalive[],int current_level,int ghost_spawned,int skeleton_spawned,int chelnov_spawned,int invis_spawned){
+	int ghost_num,skeleton_num,chelnov_num,invis_num;
 	if(current_level==1){
 		ghost_num = 8;
 		skeleton_num = 4;
+	}
+	if(current_level==2){
+		ghost_num = 4;
+		skeleton_num = 9;
+		chelnov_num = 4;
+		invis_num = 3;
+		if (ghost_spawned < ghost_num) return false;
+        if (skeleton_spawned < skeleton_num) return false;
+        if (chelnov_spawned < chelnov_num) return false;
+		if (invis_spawned < invis_num) return false;
 	}
 	// Check Ghosts
     for (int i = 0; i < ghost_num; i++) {
@@ -1189,6 +1366,16 @@ bool check_level_completion(bool isghostalive[],bool isskeletonalive[],int curre
     for (int i = 0; i < skeleton_num; i++) { 
         if (isskeletonalive[i]) return false; 
     }
+	// check Chelnovs
+	
+		for (int i = 0; i < chelnov_num; i++) {
+		if (ischelnovalive[i]) return false; 
+}
+	// check Invisible
+	for (int i = 0; i < invis_num; i++) {
+		if (isinvisalive[i]) return false;}
+
+    
     return true; // Everyone is dead
 }
 
@@ -1237,7 +1424,7 @@ void initialize_level2(char** lvl,int width,int height){
 	int platforms_needed = (rand() % 2) + 4; // Generates 4 or 5
     int attempts = 0; 
 
-    while (platforms_needed > 0 && attempts < 500) {
+    while (platforms_needed > 0 && attempts < 5000) {
         attempts++;
 
         // random Length 4 to 6
@@ -1279,6 +1466,41 @@ void initialize_level2(char** lvl,int width,int height){
 
 }
 
+void initialize_level3(char** lvl,int width,int height){
+	//clear map
+	for(int i=0;i<height;i++){
+		for(int j=0;j<width;j++)
+			lvl[i][j] = '\0';
+	}
+
+	//lowest platform
+	for(int i=0;i<width;i++){
+		lvl[13][i] = '#';
+	}
+	//left platforms
+	for(int i=0;i<4;i++){
+		lvl[3][i] = '#';
+	}
+	for(int i=0;i<3;i++){
+		lvl[6][i] = '#';
+	}
+	for(int i=0;i<6;i++){
+		lvl[10][i] = '#';
+	}
+	//right platforms
+	for(int i=width-1;i>width-4;i--){
+		lvl[3][i] = '#';
+	}
+	for(int i=width-1;i>width-7;i--){
+		lvl[6][i] = '#';
+	}
+	for(int i=width-1;i>width-5;i--){
+		lvl[10][i] = '#';
+	}
+
+	
+}
+
 
 
 int main()
@@ -1305,7 +1527,7 @@ int main()
 	Texture blockLTexture;
 	Sprite blockLSprite;	
 	Texture chelnovtex;
-	Sprite chelnov;
+	Sprite chelnovSprite[4];
 	Texture ghosttex;
 	Sprite ghostsprite[8];
 	Texture vacuumtex;
@@ -1352,8 +1574,12 @@ int main()
 	}
 
 	chelnovtex.loadFromFile("Assets/chelnov.png");
-	chelnov.setTexture(chelnovtex);
-
+	for(int i=0;i<4;i++){
+		chelnovSprite[i].setTexture(chelnovtex);
+		chelnovSprite[i].setTextureRect(IntRect(0,0,40,45));
+		chelnovSprite[i].setScale(3,3);
+	}
+	
 	bgTex.loadFromFile("Data/bg1.png");
 	bgSprite.setTexture(bgTex);
 	bgSprite.setPosition(0,0);
@@ -1411,6 +1637,16 @@ int main()
 	for(int i=0; i< 9; i++)
 		skeleton_timer[i] = rand () % 120;
 	int skeleton_speed[9]={3,3,3,3,3,3,3,3,3};
+
+
+	float chelnov_x[4] = {4*cell_size, 12*cell_size, 5*cell_size, 10*cell_size};
+    float chelnov_y[4] = {3*cell_size-120, 3*cell_size-120, 9*cell_size-120, 13*cell_size-120};
+	int chelnov_speed[4] = {3, 3, 3, 3};
+    int chelnov_state[4] = {1, 1, 1, 1};
+    int chelnov_timer[4];
+    for(int i=0; i<4; i++) 
+		chelnov_timer[i] = rand() % 180;
+	
 
 	float vac_x;
 	float vac_y;
@@ -1489,6 +1725,8 @@ int main()
 	int ghost_spawned = 0;
 	int sspawntimer = 0;
 	int skeleton_spawned = 0;
+	int chelnov_spawned = 0;
+    int cspawntimer = 0;
 	int invisspawntimer = 0;
 	int invis_spawned = 0;
 	float hitx = player_x;
@@ -1542,11 +1780,14 @@ int main()
 		isghostfacingleft[i] = false;
 	}
 
+	bool ischelnovfacingleft[4] = {false, false, false, false};
+    bool ischelnovalive[4] = {true, true, true, true};
+	
 	
 	//levels
 	int current_level=2;
 	int level2Loaded = false;
-
+	int level3Loaded = false;
 
 	Event ev;
 	//main loop
@@ -1704,8 +1945,8 @@ int main()
 	
 	
 
-	if(check_level_completion(isghostalive,isskeletonalive,current_level))
-			current_level = 2;
+	if(check_level_completion(isghostalive,isskeletonalive,ischelnovalive,isinvisalive,current_level,ghost_spawned,skeleton_spawned,chelnov_spawned,invis_spawned)){
+			current_level = 2;}
 	
 }
   else if(current_level==2){
@@ -1713,10 +1954,16 @@ int main()
 		initialize_level2(lvl,width,height);
 		level2Loaded = true;
 		//reset the variables from level one
+		ghost_spawned = 0;
+        skeleton_spawned = 0;
+        chelnov_spawned = 0;
+        invis_spawned = 0;
 		for (int i = 0; i<4; i++) 
 			isghostalive[i] = false;
 		for (int i = 0 ; i<9; i++)
 			isskeletonalive[i] = false;
+		for (int i = 0; i < 4; i++) 
+            ischelnovalive[i] = false;
 		ghost_x[0] = 110; ghost_y[0] = 700;
         ghost_x[1] = 110; ghost_y[1] = 700;
         ghost_x[2] = 100; ghost_y[2] = 700;
@@ -1749,7 +1996,9 @@ int main()
 			shoot(bullets, captured, player_x, player_y, speed, bulletx, bullety, bulletactive, speedx, speedy, shoottimer,bursttex);
 
 		updatebullets(lvl, width, height, cell_size, bulletx, bullety, bulletactive, speedx, speedy, bullets, bullettype, maxbullets, gravity);
-	level_two(lvl,width,height,ghost_x,ghost_y,ghost_speed,skeleton_x,skeleton_y,skeleton_speed,player_x,player_y,lives,cell_size,PlayerWidth,PlayerHeight,speed,ghostsprite,isghostfacingleft,ghost_state,ghost_timer,skeletonSprite,isskeletonfacingleft,skeleton_state,skeleton_timer,vac_x,vac_y,vacwidth,vacheight,isghostalive,isskeletonalive,captured,ghosttex,skeletonTex,bullets,bullettype,bulletx,bullety,bulletactive,speedx,speedy,maxbullets,shoottimer,gspawntimer,sspawntimer,skeleton_spawned,ghost_spawned,invis_spawned,invis_timer,invis_x,invis_y,invis_speed,isvisible,invisprite,isinvisfacingleft,isinvisalive,invisspawntimer,invistex);
+	level_two(lvl,width,height,ghost_x,ghost_y,ghost_speed,skeleton_x,skeleton_y,skeleton_speed,player_x,player_y,lives,cell_size,PlayerWidth,PlayerHeight,speed,ghostsprite,isghostfacingleft,ghost_state,ghost_timer,skeletonSprite,isskeletonfacingleft,skeleton_state,skeleton_timer,vac_x,vac_y,vacwidth,vacheight,isghostalive,isskeletonalive,captured,ghosttex,skeletonTex,bullets,bullettype,bulletx,bullety,bulletactive,speedx,speedy,maxbullets,shoottimer,gspawntimer,sspawntimer,ghost_spawned,skeleton_spawned,chelnov_x,chelnov_y,chelnov_speed,chelnovSprite,ischelnovfacingleft,chelnov_state,chelnov_timer,ischelnovalive,chelnov_spawned,cspawntimer,chelnovtex,invis_spawned,invis_timer,invis_x,invis_y,invis_speed,isvisible,invisprite,isinvisfacingleft,isinvisalive,invisspawntimer,invistex);
+
+		updatebullets(lvl, width, height, cell_size, bulletx, bullety, bulletactive, speedx, speedy, bullets, bullettype, maxbullets, (int)gravity);
 	for (int i =0 ; i < 4; i++){
 		if(isghostalive[i]){
 			window.draw(ghostsprite[i]);
@@ -1774,13 +2023,34 @@ int main()
 				window.draw(bullets[b]);
 			}
 		}
+	for (int i = 0; i < 4 ; i++){
+		if (ischelnovalive[i]){
+			enemy_gravity(lvl, chelnov_x[i], chelnov_y[i], 120, 135, cell_size);
+			window.draw(chelnovSprite[i]);
+		}
+	}
+
+	if(check_level_completion(isghostalive,isskeletonalive,ischelnovalive,isinvisalive,current_level,ghost_spawned,skeleton_spawned,chelnov_spawned,invis_spawned)){
+		current_level = 3;}
 
 }
+  else if(current_level==3){
+	if(!level3Loaded){
+		initialize_level3(lvl,width,height);
+		level3Loaded = true;
+	}
+
+
+
+
+
+}
+
 
 	int ghosts_left = 0;
     int skels_left = 0;
     for(int i=0; i<8; i++) if(isghostalive[i]) ghosts_left++;
-    for(int i=0; i<4; i++) if(isskeletonalive[i]) skels_left++;
+    for(int i=0; i<9; i++) if(isskeletonalive[i]) skels_left++;
     
 }
 	window.display();
